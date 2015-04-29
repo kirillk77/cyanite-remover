@@ -1,4 +1,4 @@
-(defproject cyanite-remover "0.1.0-SNAPSHOT"
+(defproject cyanite-remover "0.1.0"
   :description "Cyanite data removal tool"
   :url "https://github.com/cybem/cyanite-remover"
   :license {:name "MIT License"
