@@ -98,7 +98,7 @@
                   (string-or-empty rollup "rollup: ")
                   (string-or-empty period ", period: ")
                   (string-or-empty path ", path: ")
-                  (string-or-empty times ", time: "))))
+                  (string-or-empty (vec times) ", time: "))))
 
 (defn- get-delete-channel
   "Get delete channel."
@@ -164,18 +164,18 @@
                 prepared (:prepared statement)
                 cql (:cql statement)
                 query (alia/bind prepared values)]
-            (log/debug "Fetching metrics: "
-                       "rollup: " rollup ", "
-                       "period: " period ", "
-                       "path: " path
-                       (string-or-empty from ", from: ")
-                       (string-or-empty to ", to: "))
+            (log/debug (str "Fetching metrics: "
+                            "rollup: " rollup ", "
+                            "period: " period ", "
+                            "path: " path
+                            (string-or-empty from ", from: ")
+                            (string-or-empty to ", to: ")))
             (alia/execute session query))
           (catch Exception e
             (log-error e rollup period path stats-errors)
             :mstore-error)))
       (delete [this tenant rollup period path]
-        (log-deletion tenant rollup period path)
+        (log-deletion rollup period path)
         (swap! stats-processed inc)
         (let [values (build-values tenant rollup period path)]
           (swap! batch
@@ -183,7 +183,7 @@
                     (conj % values)
                     (do (async/>!! channel {:values (conj % values)}) [])))))
       (delete-times [this tenant rollup period path times]
-        (log-deletion tenant rollup period path times)
+        (log-deletion rollup period path times)
         (swap! stats-processed inc)
         (let [series (map #(build-values tenant rollup period path %) times)
               batches (partition-all batch-size series)]
