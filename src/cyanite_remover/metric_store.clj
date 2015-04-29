@@ -73,6 +73,7 @@
   [^PreparedStatement statement values]
   (let [batch-statement (BatchStatement.)]
     (let [{:keys [prepared cql]} statement]
+      (log/trace (format "Bind: CQL: %s, values: %s" cql (vec values)))
       (doseq [value values]
         (.add batch-statement (.bind prepared (into-array Object value))))
       batch-statement)))
@@ -111,7 +112,7 @@
                 (if data
                   (let [{:keys [values rollup period path]} data]
                     (try
-                      (let [has-time (> (count (first data)) 4)
+                      (let [has-time (> (count (first values)) 4)
                             statement (get pcqls has-time)
                             query (build-batch statement values)]
                         (when run
@@ -163,6 +164,7 @@
                 values (build-values tenant rollup period path from to)
                 prepared (:prepared statement)
                 cql (:cql statement)
+                _ (log/trace (format "Bind: CQL: %s, values: %s" cql values))
                 query (alia/bind prepared values)]
             (log/debug (str "Fetching metrics: "
                             "rollup: " rollup ", "
@@ -183,8 +185,8 @@
                     (conj % values)
                     (do (async/>!! channel {:values (conj % values)}) [])))))
       (delete-times [this tenant rollup period path times]
-        (log-deletion rollup period path times)
         (swap! stats-processed inc)
+        (log-deletion rollup period path times)
         (let [series (map #(build-values tenant rollup period path %) times)
               batches (partition-all batch-size series)]
           (dorun (map #(async/>!! channel {:values %

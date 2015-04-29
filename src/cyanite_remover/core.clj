@@ -5,7 +5,10 @@
             [clojure.tools.logging :as log]
             [cyanite-remover.metric-store :as mstore]
             [cyanite-remover.path-store :as pstore]
-            [cyanite-remover.logging :as wlog]))
+            [cyanite-remover.logging :as wlog]
+            [com.climate.claypoole :as cp]))
+
+(def ^:const default-jobs 1)
 
 (def ^:const pbar-width 35)
 
@@ -55,6 +58,17 @@
   (println "  Processed: " processed)
   (println "  Errors:    " errors))
 
+(defn- process-metric
+  "Process a metric."
+  [process-fn mstore options tenant from to rollup-def path]
+  (try
+    (let [rollup (first rollup-def)
+          period (last rollup-def)]
+      (process-fn mstore options tenant rollup period path from to))
+    (catch Exception e
+      (wlog/error (str "Metric processing error: " e ", "
+                       "path: " path) e))))
+
 (defn- process-metrics
   "Process metrics."
   [tenant rollups paths cass-hosts es-url options process-fn title show-stats?]
@@ -63,7 +77,11 @@
     (try
       (let [all-paths (get-paths pstore tenant paths)
             from (:from options)
-            to (:to options)]
+            to (:to options)
+            jobs (:jobs options default-jobs)
+            tpool (cp/threadpool jobs)
+            proc-fn (partial process-metric process-fn mstore options tenant
+                             from to)]
         (prog/set-progress-bar!
          "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
         (prog/config-progress-bar! :width pbar-width)
@@ -72,11 +90,12 @@
         (when-not @wlog/print-log?
           (println title)
           (prog/init (count all-paths)))
-        (doseq [path all-paths
-                rollup-def rollups]
-          (let [rollup (first rollup-def)
-                period (last rollup-def)]
-            (process-fn mstore options tenant rollup period path from to)))
+        (let [paths-rollups (for [p all-paths r rollups] [p r])
+              futures (doall (map #(cp/future tpool
+                                              (proc-fn (second %) (first %)))
+                                  paths-rollups))]
+          (dorun (map #(do (deref %) (when-not @wlog/print-log? (prog/tick)))
+                      futures)))
         (when-not @wlog/print-log?
           (prog/done)))
       (finally
@@ -93,7 +112,7 @@
   [mstore options tenant rollup period path from to]
   (if (or from to)
     (let [result (mstore/fetch mstore tenant rollup period path from to)]
-      (map #(get :time %) result))
+      (if (= result :mstore-error) [] (map #(:time %) result)))
     nil))
 
 (defn- remove-metrics-path
@@ -105,10 +124,9 @@
                     "period: " period ", "
                     "path: " path))
     (if times
-      (mstore/delete-times mstore tenant rollup period path times)
-      (mstore/delete mstore tenant rollup period path))
-    (when-not @wlog/print-log?
-      (prog/tick))))
+      (when (seq times)
+        (mstore/delete-times mstore tenant rollup period path times))
+      (mstore/delete mstore tenant rollup period path))))
 
 (defn remove-metrics
   "Remove metrics."
