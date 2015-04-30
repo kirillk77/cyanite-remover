@@ -51,6 +51,34 @@
 (def ^:const delete-cqls {false delete-cql
                           true (str delete-cql " AND time = ?")})
 
+(defn- string-or-empty
+  "Return a passed string if value is not nil and an empty string otherwise."
+  [value string]
+  (if value (str string value) ""))
+
+(defn- log-error
+  "Log a error."
+  [error rollup period path stats-errors]
+  (wlog/error (str "Metric store error: " error ", "
+                   "rollup " rollup ", "
+                   "period: " period ", "
+                   "path: " path) error)
+  (swap! stats-errors inc))
+
+(defmacro log-deletion
+  "Log a deletion."
+  [rollup period path & [times]]
+  `(log/debug (str "Removing metrics: "
+                   (string-or-empty ~rollup "rollup: ")
+                   (string-or-empty ~period ", period: ")
+                   (string-or-empty ~path ", path: ")
+                   (string-or-empty (vec ~times) ", time: "))))
+
+(defmacro log-binding
+  "Log a binding."
+  [cql values]
+  `(log/trace (format "Bind: CQL: %s, values: %s" ~cql ~values)))
+
 (defn- prepare-cqls
   "Prepare a family of CQL queries."
   [cqls session]
@@ -73,33 +101,10 @@
   [^PreparedStatement statement values]
   (let [batch-statement (BatchStatement.)]
     (let [{:keys [prepared cql]} statement]
-      (log/trace (format "Bind: CQL: %s, values: %s" cql (vec values)))
+      (log-binding cql (vec values))
       (doseq [value values]
         (.add batch-statement (.bind prepared (into-array Object value))))
       batch-statement)))
-
-(defn- string-or-empty
-  "Return a passed string if value is not nil and an empty string otherwise."
-  [value string]
-  (if value (str string value) ""))
-
-(defn- log-error
-  "Log a error."
-  [error rollup period path stats-errors]
-  (wlog/error (str "Metric store error: " error ", "
-                   "rollup " rollup ", "
-                   "period: " period ", "
-                   "path: " path) error)
-  (swap! stats-errors inc))
-
-(defn- log-deletion
-  "Log a deletion."
-  [rollup period path & [times]]
-  (log/debug (str "Removing metrics: "
-                  (string-or-empty rollup "rollup: ")
-                  (string-or-empty period ", period: ")
-                  (string-or-empty path ", path: ")
-                  (string-or-empty (vec times) ", time: "))))
 
 (defn- get-delete-channel
   "Get delete channel."
@@ -164,7 +169,7 @@
                 values (build-values tenant rollup period path from to)
                 prepared (:prepared statement)
                 cql (:cql statement)
-                _ (log/trace (format "Bind: CQL: %s, values: %s" cql values))
+                _ (log-binding cql values)
                 query (alia/bind prepared values)]
             (log/debug (str "Fetching metrics: "
                             "rollup: " rollup ", "

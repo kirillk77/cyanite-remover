@@ -50,11 +50,12 @@
      (when (instance? Throwable ~throwable)
        (stacktrace/print-stack-trace ~throwable))))
 
-(defn info-always
+(defmacro info-always
   "Always log info."
   [msg & [throwable]]
-  (log-print msg throwable)
-  (log-log log/info msg throwable))
+  `(do
+     (log-print ~msg ~throwable)
+     (log-log log/info ~msg ~throwable)))
 
 (defn exit
   "Exit."
@@ -68,41 +69,45 @@
       (println exit-msg)))
   (System/exit ret-code))
 
-(defn info
+(defmacro info
   "Log info."
   [msg & [throwable]]
-  (when @print-log?
-    (log-print msg throwable))
-  (log-log log/info msg throwable))
+  `(do
+     (when @print-log?
+       (log-print ~msg ~throwable))
+     (log-log log/info ~msg ~throwable)))
 
-(defn warning
+(defmacro warning
   "Log warning."
   [msg & [throwable]]
-  (when @print-log?
-    (log-print msg throwable))
-  (log-log log/warn msg throwable))
+  `(do
+     (when @print-log?
+       (log-print ~msg ~throwable))
+     (log-log log/warn ~msg ~throwable)))
 
-(defn error
+(defmacro error
   "Log error."
   [msg & [throwable]]
-  (when (and (not @print-log?) @stop-on-error?)
-    (newline))
-  (when (or @print-log? @stop-on-error?)
-    (log-print msg throwable))
-  (log-log log/error msg throwable)
-  (when @stop-on-error?
-    (exit 1)))
+  `(do
+     (when (and (not @print-log?) @stop-on-error?)
+       (newline))
+     (when (or @print-log? @stop-on-error?)
+       (log-print ~msg ~throwable))
+     (log-log log/error ~msg ~throwable)
+     (when @stop-on-error?
+       (exit 1))))
 
-(defn fatal
+(defmacro fatal
   "Log fatal."
   [msg & [throwable]]
-  (when-not @print-log?
-    (newline))
-  (log-print msg throwable)
-  (log-log log/fatal msg throwable)
-  (exit 1))
+  `(do
+     (when-not @print-log?
+       (newline))
+     (log-print ~msg ~throwable)
+     (log-log log/fatal ~msg ~throwable)
+     (exit 1)))
 
 (defn unhandled-error
   "Log unhandled error."
-  [e]
-  (fatal (str "Fatal error: " e) e))
+  [throwable]
+  (fatal (str "Fatal error: " throwable) throwable))
