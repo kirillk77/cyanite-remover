@@ -91,7 +91,7 @@
         (wlog/info (str title ":"))
         (when-not @wlog/print-log?
           (println title)
-          (prog/init (count all-paths)))
+          (prog/init (* (count all-paths) (count rollups))))
         (let [paths-rollups (for [p all-paths r rollups] [p r])
               futures (doall (map #(cp/future tpool
                                               (proc-fn (second %) (first %)))
