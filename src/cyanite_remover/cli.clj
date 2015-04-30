@@ -91,12 +91,15 @@
   "Run command 'remove-metrics'."
   [command arguments options summary]
   (check-arguments "remove-metrics" arguments 5 5)
-  (check-options command #{:from :to :run :cassandra-keyspace :cassandra-options
-                           :cassandra-channel-size :cassandra-batch-size
-                           :cassandra-batch-rate :elasticsearch-index :log-file
-                           :log-level :disable-log :stop-on-error
-                           :disable-progress}
+  (check-options command #{:from :to :run :jobs :cassandra-keyspace
+                           :cassandra-options :cassandra-channel-size
+                           :cassandra-batch-size :cassandra-batch-rate
+                           :elasticsearch-index :log-file :log-level
+                           :disable-log :stop-on-error :disable-progress}
                  options)
+  (when (and (:jobs options) (not (or (:from options) (:to options))))
+    (exit 1 (error-msg
+             ["Option \"--jobs\" requires \"--from\" and/or \"--to\""])))
   (let [{:keys [tenant rollups paths cass-hosts es-url
                 options]} (prepare-metrics-args arguments options)]
     (core/remove-metrics tenant rollups paths cass-hosts es-url options)))
@@ -147,6 +150,9 @@
    ["-r" "--run" "Force normal run (dry run using on default)"]
    [nil "--cassandra-keyspace KEYSPACE"
     (str "Cassandra keyspace. Default: " mstore/default-cassandra-keyspace)]
+   ["-j" "--jobs JOBS" "Number of jobs to run simultaneously"
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 %) "Must be a number > 0"]]
    ["-O" "--cassandra-options OPTIONS"
     "Cassandra options. Example: \"{:compression :lz4}\""
     :parse-fn #(read-string %)
