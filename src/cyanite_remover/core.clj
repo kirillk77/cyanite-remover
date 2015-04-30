@@ -12,6 +12,8 @@
 
 (def ^:const pbar-width 35)
 
+(def stats-processed (atom 0))
+
 (def list-metrics-str "Path: %s, rollup: %s, period: %s, time: %s, data: %s")
 (def starting-str "==================== Starting ====================")
 
@@ -103,7 +105,7 @@
         (when show-stats?
           (let [mstore-stats (mstore/get-stats mstore)
                 pstore-stats (pstore/get-stats pstore)]
-            (show-stats (:processed mstore-stats)
+            (show-stats @stats-processed
                         (+ (:errors mstore-stats)
                            (:errors pstore-stats)))))))))
 
@@ -118,6 +120,7 @@
 (defn- remove-metrics-path
   "List metrics for a path."
   [mstore options tenant rollup period path from to]
+  (swap! stats-processed inc)
   (let [times (get-times mstore options tenant rollup period path from to)]
     (wlog/info (str "Removing metrics: "
                     "rollup: " rollup ", "
@@ -176,6 +179,7 @@
     (dry-mode-warn options)
     (process-paths tenant paths es-url options
                    (fn [pstore options tenant paths]
+                     (swap! stats-processed inc)
                      (pstore/delete pstore tenant false false paths))
                    "Removing paths" true)
     (catch Exception e
