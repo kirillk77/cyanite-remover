@@ -159,7 +159,7 @@
     (log/info (str "The metric store has been created. "
                    "Keyspace: " keyspace ", "
                    "channel size: " chan-size ", "
-                   "batch size: " batch-size
+                   "batch size: " batch-size ", "
                    "batch rate: " batch-rate))
     (reify
       MetricStore
