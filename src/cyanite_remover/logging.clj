@@ -4,12 +4,12 @@
             [clojure.tools.logging :as log]
             [org.spootnik.logconfig :as logconfig]))
 
-(defmacro disable-logging!
-  "Disable logging."
+(defmacro log-disable-logging!
+  "Disable logging macro."
   []
   `(logconfig/start-logging! {:level "off" :console false :files ""}))
 
-(disable-logging!)
+(log-disable-logging!)
 
 (def ^:const default-log-file "cyanite-remover.log")
 (def ^:const default-log-level "info")
@@ -27,7 +27,7 @@
   (if-not @disable-log?
     (logconfig/start-logging! {:level (:log-level options default-log-level)
                                :files [(:log-file options default-log-file)]})
-    (disable-logging!)))
+    (log-disable-logging!)))
 
 (defn disable-logging!
   "Disable logging."
@@ -35,7 +35,7 @@
   (swap! print-log? (fn [_] true))
   (swap! disable-log? (fn [_] true))
   (swap! stop-on-error? (fn [_] true))
-  (logconfig/start-logging! {:level "off" :console false :files ""}))
+  (log-disable-logging!))
 
 (defmacro log-log
   [f msg throwable]
