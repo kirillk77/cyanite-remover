@@ -67,17 +67,26 @@
 
 (defmacro log-deletion
   "Log a deletion."
-  [rollup period path & [times]]
-  `(log/debug (str "Removing metrics: "
-                   (string-or-empty ~rollup "rollup: ")
-                   (string-or-empty ~period ", period: ")
-                   (string-or-empty ~path ", path: ")
-                   (string-or-empty (vec ~times) ", time: "))))
+  [log-fn rollup period path & [times times-title]]
+  `(~log-fn (str "Removing metrics: "
+                 (string-or-empty ~rollup "rollup: ")
+                 (string-or-empty ~period ", period: ")
+                 (string-or-empty ~path ", path: ")
+                 (string-or-empty ~times (str ", " ~times-title ": ")))))
 
 (defmacro log-binding
   "Log a binding."
   [cql values]
   `(log/trace (format "Bind: CQL: %s, values: %s" ~cql ~values)))
+
+(defmacro log-fetching
+  [title rollup period path & [from to]]
+  `(log/debug (str ~title
+                   "rollup: " ~rollup ", "
+                   "period: " ~period ", "
+                   "path: " ~path
+                   (string-or-empty ~from ", from: ")
+                   (string-or-empty ~to ", to: "))))
 
 (defn- prepare-cqls
   "Prepare a family of CQL queries."
@@ -171,18 +180,16 @@
                 cql (:cql statement)
                 _ (log-binding cql values)
                 query (alia/bind prepared values)]
-            (log/debug (str "Fetching metrics: "
-                            "rollup: " rollup ", "
-                            "period: " period ", "
-                            "path: " path
-                            (string-or-empty from ", from: ")
-                            (string-or-empty to ", to: ")))
-            (alia/execute session query))
+            (log-fetching "Fetching metrics: " rollup period path from to)
+            (let [data (alia/execute session query)]
+              (log-fetching (format "Fetched %s metrics: " (count data)) rollup
+                            period path from to)
+              data))
           (catch Exception e
             (log-error e rollup period path stats-errors)
             :mstore-error)))
       (delete [this tenant rollup period path]
-        (log-deletion rollup period path)
+        (log-deletion log/debug rollup period path)
         (swap! stats-processed inc)
         (let [values (build-values tenant rollup period path)]
           (swap! batch
@@ -191,7 +198,10 @@
                     (do (async/>!! channel {:values (conj % values)}) [])))))
       (delete-times [this tenant rollup period path times]
         (swap! stats-processed inc)
-        (log-deletion rollup period path times)
+        (log-deletion log/debug rollup period path (count times)
+                      "number of time points")
+        (log-deletion log/trace rollup period path (vec times)
+                      "time points")
         (let [series (map #(build-values tenant rollup period path %) times)
               batches (partition-all batch-size series)]
           (dorun (map #(async/>!! channel {:values %
