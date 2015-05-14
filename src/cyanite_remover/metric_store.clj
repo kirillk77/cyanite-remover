@@ -1,11 +1,11 @@
 (ns cyanite-remover.metric-store
-  (:require [qbits.alia :as alia]
+  (:require [cyanite-remover.logging :as wlog]
+            [qbits.alia :as alia]
             [qbits.alia.policy.load-balancing :as alia_lbp]
             [clojure.core.async :as async]
             [throttler.core :as trtl]
             [clojure.tools.logging :as log]
-            [clojure.string :as str]
-            [cyanite-remover.logging :as wlog])
+            [clojure.string :as str])
   (:import [com.datastax.driver.core
             PreparedStatement
             BatchStatement]))

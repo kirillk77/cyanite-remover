@@ -3,9 +3,9 @@
             [clojure.set :as set]
             [clj-progress.core :as prog]
             [clojure.tools.logging :as log]
+            [cyanite-remover.logging :as wlog]
             [cyanite-remover.metric-store :as mstore]
             [cyanite-remover.path-store :as pstore]
-            [cyanite-remover.logging :as wlog]
             [com.climate.claypoole :as cp]))
 
 (def ^:const default-jobs 1)
