@@ -1,8 +1,11 @@
 (ns cyanite-remover.core
+  (:import (java.io RandomAccessFile)
+           (org.joda.time.format PeriodFormatterBuilder))
   (:require [clojure.string :as str]
             [clojure.set :as set]
             [clj-progress.core :as prog]
             [clojure.tools.logging :as log]
+            [clj-time.core :as time]
             [cyanite-remover.logging :as wlog]
             [cyanite-remover.metric-store :as mstore]
             [cyanite-remover.path-store :as pstore]
@@ -51,14 +54,34 @@
       (println warn-str)
       (log/warn warn-str))))
 
+(defn- show-duration
+  "Show duration."
+  [interval]
+  ;; https://stackoverflow.com/questions/3471397/pretty-print-duration-in-java
+  (let [formatter (-> (PeriodFormatterBuilder.)
+                      (.appendDays) (.appendSuffix "d ")
+                      (.appendHours) (.appendSuffix "h ")
+                      (.appendMinutes) (.appendSuffix "m ")
+                      (.appendSeconds) (.appendSuffix "s")
+                      (.toFormatter))
+        duration-pp (.print formatter (.toPeriod interval))
+        duration-sec (.getSeconds (.toStandardSeconds (.toDuration interval)))
+        duration-str (format "Duration: %ss%s" duration-sec
+                             (if (duration-sec > 59)
+                               (format " (%s)" duration-pp) ""))]
+    (log/info duration-str)
+    (newline)
+    (println duration-str)))
+
 (defn- show-stats
   "Show stats."
-  [processed errors]
+  [processed errors interval]
   (log/info (format "Stats: processed %s, errors: %s" processed errors))
   (newline)
   (println "Stats:")
   (println "  Processed: " processed)
-  (println "  Errors:    " errors))
+  (println "  Errors:    " errors)
+  (show-duration interval))
 
 (defn- process-metric
   "Process a metric."
@@ -74,7 +97,8 @@
 (defn- process-metrics
   "Process metrics."
   [tenant rollups paths cass-hosts es-url options process-fn title show-stats?]
-  (let [mstore (mstore/cassandra-metric-store cass-hosts options)
+  (let [start-time (time/now)
+        mstore (mstore/cassandra-metric-store cass-hosts options)
         pstore (pstore/elasticsearch-path-store es-url options)]
     (try
       (let [all-paths (get-paths pstore tenant paths)
@@ -107,7 +131,8 @@
                 pstore-stats (pstore/get-stats pstore)]
             (show-stats @stats-processed
                         (+ (:errors mstore-stats)
-                           (:errors pstore-stats)))))))))
+                           (:errors pstore-stats))
+                        (time/interval start-time (time/now)))))))))
 
 (defn- get-times
   "Get a list of times."
