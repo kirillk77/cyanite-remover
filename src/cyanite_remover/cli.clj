@@ -1,7 +1,7 @@
 (ns cyanite-remover.cli
   (:require [clojure.string :as str]
             [clojure.tools.cli :as cli]
-            [cyanite-remover.logging :as wlog]
+            [cyanite-remover.logging :as clog]
             [cyanite-remover.metric-store :as mstore]
             [cyanite-remover.path-store :as pstore]
             [cyanite-remover.core :as core]
@@ -171,10 +171,10 @@
     :validate [#(< 0 % 101) "Must be a number between 1-100"]]
    [nil "--elasticsearch-index INDEX"
     (str "Elasticsearch index. Default: " pstore/default-es-index)]
-   ["-l" "--log-file FILE" (str "Log file. Default: " wlog/default-log-file)]
+   ["-l" "--log-file FILE" (str "Log file. Default: " clog/default-log-file)]
    ["-L" "--log-level LEVEL"
     (str "Log level (all, trace, debug, info, warn, error, fatal, off). "
-         "Default: " wlog/default-log-level)
+         "Default: " clog/default-log-level)
     :validate [#(or (= (count %) 0)
                     (not= (get logconfig/levels % :not-found) :not-found))
                "Invalid log level"]]
@@ -202,4 +202,4 @@
      errors (exit 1 (error-msg errors)))
     ;; Run command
     (run-command arguments options summary)
-    (wlog/exit 0)))
+    (clog/exit 0)))

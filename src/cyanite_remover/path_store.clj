@@ -5,7 +5,7 @@
             [clojurewerkz.elastisch.rest.response :as esrr]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [cyanite-remover.logging :as wlog]))
+            [cyanite-remover.logging :as clog]))
 
 (defprotocol PathStore
   "Path store."
@@ -25,7 +25,7 @@
 (defn- log-error
   "Log a error."
   [error path stats-errors]
-  (wlog/error (format "Path store error: %s, path: %s" error path) error))
+  (clog/error (format "Path store error: %s, path: %s" error path) error))
 
 (defn- wildcards-to-regexp
   "Convert Graphite wildcards to a regular expression."

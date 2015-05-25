@@ -1,5 +1,5 @@
 (ns cyanite-remover.metric-store
-  (:require [cyanite-remover.logging :as wlog]
+  (:require [cyanite-remover.logging :as clog]
             [qbits.alia :as alia]
             [qbits.alia.policy.load-balancing :as alia_lbp]
             [clojure.core.async :as async]
@@ -59,7 +59,7 @@
 (defn- log-error
   "Log a error."
   [error rollup period path stats-errors]
-  (wlog/error (str "Metric store error: " error ", "
+  (clog/error (str "Metric store error: " error ", "
                    "rollup " rollup ", "
                    "period: " period ", "
                    "path: " path) error)

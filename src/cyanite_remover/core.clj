@@ -6,7 +6,7 @@
             [clj-progress.core :as prog]
             [clojure.tools.logging :as log]
             [clj-time.core :as time]
-            [cyanite-remover.logging :as wlog]
+            [cyanite-remover.logging :as clog]
             [cyanite-remover.metric-store :as mstore]
             [cyanite-remover.path-store :as pstore]
             [com.climate.claypoole :as cp]))
@@ -32,8 +32,8 @@
   (let [paths (lookup-paths pstore tenant true false paths-to-lookup)
         title "Getting paths"]
     (newline)
-    (wlog/info (str title "..."))
-    (when-not @wlog/print-log?
+    (clog/info (str title "..."))
+    (when-not @clog/print-log?
       (println title)
       (prog/set-progress-bar! "[:bar] :done")
       (prog/config-progress-bar! :width pbar-width)
@@ -41,7 +41,7 @@
       (doseq [_ paths]
         (prog/tick))
       (prog/done))
-    (wlog/info (format "Found %s paths" (count paths)))
+    (clog/info (format "Found %s paths" (count paths)))
     paths))
 
 (defn- dry-mode-warn
@@ -91,7 +91,7 @@
           period (last rollup-def)]
       (process-fn mstore options tenant rollup period path from to))
     (catch Exception e
-      (wlog/error (str "Metric processing error: " e ", "
+      (clog/error (str "Metric processing error: " e ", "
                        "path: " path) e))))
 
 (defn- process-metrics
@@ -112,17 +112,17 @@
          "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
         (prog/config-progress-bar! :width pbar-width)
         (newline)
-        (wlog/info (str title ":"))
-        (when-not @wlog/print-log?
+        (clog/info (str title ":"))
+        (when-not @clog/print-log?
           (println title)
           (prog/init (* (count all-paths) (count rollups))))
         (let [paths-rollups (for [p all-paths r rollups] [p r])
               futures (doall (map #(cp/future tpool
                                               (proc-fn (second %) (first %)))
                                   paths-rollups))]
-          (dorun (map #(do (deref %) (when-not @wlog/print-log? (prog/tick)))
+          (dorun (map #(do (deref %) (when-not @clog/print-log? (prog/tick)))
                       futures)))
-        (when-not @wlog/print-log?
+        (when-not @clog/print-log?
           (prog/done)))
       (finally
         (mstore/shutdown mstore)
@@ -147,7 +147,7 @@
   [mstore options tenant rollup period path from to]
   (swap! stats-processed inc)
   (let [times (get-times mstore options tenant rollup period path from to)]
-    (wlog/info (str "Removing metrics: "
+    (clog/info (str "Removing metrics: "
                     "rollup: " rollup ", "
                     "period: " period ", "
                     "path: " path))
@@ -160,13 +160,13 @@
   "Remove metrics."
   [tenant rollups paths cass-hosts es-url options]
   (try
-    (wlog/set-logging! options)
+    (clog/set-logging! options)
     (log/info starting-str)
     (dry-mode-warn options)
     (process-metrics tenant rollups paths cass-hosts es-url options
                      remove-metrics-path "Removing metrics" true)
     (catch Exception e
-      (wlog/unhandled-error e))))
+      (clog/unhandled-error e))))
 
 (defn- list-metrics-path
   "List metrics for a path."
@@ -179,16 +179,16 @@
   "List metrics."
   [tenant rollups paths cass-hosts es-url options]
   (try
-    (wlog/disable-logging!)
+    (clog/disable-logging!)
     (process-metrics tenant rollups paths cass-hosts es-url options
                      list-metrics-path "Metrics" false)
     (catch Exception e
-      (wlog/unhandled-error e))))
+      (clog/unhandled-error e))))
 
 (defn- process-paths
   "Process paths."
   [tenant paths es-url options process-fn title show-stats?]
-  (wlog/info (str title ":"))
+  (clog/info (str title ":"))
   (let [pstore (pstore/elasticsearch-path-store es-url options)]
     (process-fn pstore options tenant paths)
     (when show-stats?
@@ -199,7 +199,7 @@
   "Remove paths."
   [tenant paths es-url options]
   (try
-    (wlog/set-logging! options)
+    (clog/set-logging! options)
     (log/info starting-str)
     (dry-mode-warn options)
     (process-paths tenant paths es-url options
@@ -208,17 +208,17 @@
                      (pstore/delete pstore tenant false false paths))
                    "Removing paths" true)
     (catch Exception e
-      (wlog/unhandled-error e))))
+      (clog/unhandled-error e))))
 
 (defn list-paths
   "List paths."
   [tenant paths es-url options]
   (try
-    (wlog/disable-logging!)
+    (clog/disable-logging!)
     (process-paths tenant paths es-url options
                    (fn [pstore options tenant paths]
                      (dorun (map println (lookup-paths pstore tenant false
                                                        false paths))))
                    "Paths" false)
     (catch Exception e
-      (wlog/unhandled-error e))))
+      (clog/unhandled-error e))))
