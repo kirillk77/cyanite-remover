@@ -206,8 +206,9 @@
     (dry-mode-warn options)
     (process-paths tenant paths es-url options
                    (fn [pstore options tenant paths]
-                     (swap! stats-processed inc)
-                     (pstore/delete pstore tenant false false paths))
+                     (dorun (map #(do (swap! stats-processed inc)
+                                      (pstore/delete pstore tenant false false %))
+                                 paths)))
                    "Removing paths" true)
     (catch Exception e
       (clog/unhandled-error e))))
