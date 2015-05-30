@@ -25,7 +25,8 @@
 (defn- log-error
   "Log a error."
   [error path stats-errors]
-  (clog/error (format "Path store error: %s, path: %s" error path) error))
+  (clog/error (format "Path store error: path: %s, error: %s" path error) error)
+  (swap! stats-errors inc))
 
 (defn- wildcards-to-regexp
   "Convert Graphite wildcards to a regular expression."
@@ -82,6 +83,35 @@
     (log/trace (str "ES search respond: " resp))
     (map #(:_source %) (scroll-fn resp))))
 
+(defn- log-shards-errors
+  "Log shards' errors."
+  [failed failures path stats-errors]
+  (let [shards-errors (str/join "\n" (map #(format "shard: %s, error: %s"
+                                                   (:shard %) (:reason %))
+                                          failures))]
+    (log-error
+     (format "there were %s errors during the removal of the path:\n%s"
+             failed shards-errors) path stats-errors)))
+
+(defn- process-response-delete
+  "Process response of delete-by-query."
+  [response index path stats-errors]
+  (log/trace (str "ES delete respond: " response))
+  (let [error-fn #(do (log-error (format "Can't get \"%s\" value from response" %)
+                                 path stats-errors) false)]
+    (if-let [shards (:_shards (get (:_indices response) (keyword index)))]
+      (let [total (:total shards)
+            successful (:successful shards)
+            failed (:failed shards)]
+        (cond
+         (not total) (error-fn "total")
+         (not successful) (error-fn "successful")
+         (not failed) (error-fn "failed")
+         (> failed 0) (do (log-shards-errors failed (:failures shards) path
+                                             stats-errors) false))
+        true)
+      (error-fn "shards"))))
+
 (defn elasticsearch-path-store
   "Create an Elasticsearch path store."
   [url options]
@@ -113,8 +143,8 @@
                                                  limit-depth path))]
             (log/trace (str "ES delete query: " query))
             (if run
-              (let [resp (delete-fn query)]
-                (log/trace (str "ES delete respond: " resp)))))
+              (let [response (delete-fn query)]
+                (process-response-delete response index path stats-errors))))
           (catch Exception e
             (log-error e path stats-errors))))
       (get-stats [this]
