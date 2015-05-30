@@ -67,7 +67,7 @@
         duration-pp (.print formatter (.toPeriod interval))
         duration-sec (.getSeconds (.toStandardSeconds (.toDuration interval)))
         duration-str (format "Duration: %ss%s" duration-sec
-                             (if (duration-sec > 59)
+                             (if (> duration-sec 59)
                                (format " (%s)" duration-pp) ""))]
     (log/info duration-str)
     (newline)
@@ -189,11 +189,13 @@
   "Process paths."
   [tenant paths es-url options process-fn title show-stats?]
   (clog/info (str title ":"))
-  (let [pstore (pstore/elasticsearch-path-store es-url options)]
+  (let [start-time (time/now)
+        pstore (pstore/elasticsearch-path-store es-url options)]
     (process-fn pstore options tenant paths)
     (when show-stats?
       (let [pstore-stats (pstore/get-stats pstore)]
-        (show-stats (:processed pstore-stats) (:errors pstore-stats))))))
+        (show-stats (:processed pstore-stats) (:errors pstore-stats)
+                    (time/interval start-time (time/now)))))))
 
 (defn remove-paths
   "Remove paths."
