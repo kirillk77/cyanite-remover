@@ -109,7 +109,7 @@
   [command arguments options summary]
   (check-arguments "remove-paths" arguments 3 3)
   (check-options command #{:run :elasticsearch-index :log-file :log-level
-                           :disable-log}
+                           :disable-log :disable-progress}
                  options)
   (let [{:keys [tenant paths es-url
                 options]} (prepare-paths-args arguments options)]

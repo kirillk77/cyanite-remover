@@ -188,17 +188,31 @@
 (defn- process-paths
   "Process paths."
   [tenant paths es-url options process-fn title show-stats?]
-  (clog/info (str title ":"))
   (let [start-time (time/now)
         pstore (pstore/elasticsearch-path-store es-url options)]
-    (dorun (map #(do
-                   (swap! stats-processed inc)
-                   (process-fn pstore options tenant %))
-                paths))
-    (when show-stats?
-      (let [pstore-stats (pstore/get-stats pstore)]
-        (show-stats (:processed pstore-stats) (:errors pstore-stats)
-                    (time/interval start-time (time/now)))))))
+    (try
+      (prog/set-progress-bar!
+       "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
+      (prog/config-progress-bar! :width pbar-width)
+      (newline)
+      (clog/info (str title ":"))
+      (when-not @clog/print-log?
+        (println title)
+        (prog/init (count paths)))
+      (dorun (map #(do
+                     (swap! stats-processed inc)
+                     (when-not @clog/print-log?
+                       (prog/tick))
+                     (clog/info (str "Removing path: " %))
+                     (process-fn pstore options tenant %))
+                  paths))
+      (when-not @clog/print-log?
+        (prog/done))
+      (finally
+        (when show-stats?
+          (let [pstore-stats (pstore/get-stats pstore)]
+            (show-stats (:processed pstore-stats) (:errors pstore-stats)
+                        (time/interval start-time (time/now)))))))))
 
 (defn remove-paths
   "Remove paths."
