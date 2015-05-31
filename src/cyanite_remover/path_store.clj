@@ -2,7 +2,6 @@
   (:require [clojurewerkz.elastisch.rest :as esr]
             [clojurewerkz.elastisch.rest.index :as esri]
             [clojurewerkz.elastisch.rest.document :as esrd]
-            [clojurewerkz.elastisch.rest.response :as esrr]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [cyanite-remover.logging :as clog]))
