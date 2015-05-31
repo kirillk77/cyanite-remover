@@ -48,6 +48,7 @@
   (System/exit status))
 
 (defn- check-arguments
+  "Check arguments."
   [command arguments min max]
   (let [n-args (count arguments)]
     (when (or (< n-args min) (> n-args max))
