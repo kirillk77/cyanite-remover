@@ -22,7 +22,7 @@
 (defn- usage
   "Construct usage message."
   [options-summary]
-  (->> ["Cyanite data removal tool"
+  (->> ["A Cyanite data removal tool"
         ""
         "Usage: "
         "  cyanite-remover [options] remove-metrics <tenant> <rollup:period,...> <path,...> <cassandra-host,...> <elasticsearch-url>"
