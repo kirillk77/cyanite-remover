@@ -1,10 +1,19 @@
 # cyanite-remover changes
 
+## 0.3.0
+
+This is a minor feature and bugfix release.
+
+* Add the `--help` command line option
+* Add display duration time
+* Fix path removing
+* Add progress bar for path operations
+
 ## 0.2.0
 
 This is a minor feature and bugfix release.
 
-* Add new `--jobs` command line option
+* Add the `--jobs` command line option
 * Fix errors in logging
 * Fix errors in stats
 
