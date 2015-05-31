@@ -191,7 +191,10 @@
   (clog/info (str title ":"))
   (let [start-time (time/now)
         pstore (pstore/elasticsearch-path-store es-url options)]
-    (process-fn pstore options tenant paths)
+    (dorun (map #(do
+                   (swap! stats-processed inc)
+                   (process-fn pstore options tenant %))
+                paths))
     (when show-stats?
       (let [pstore-stats (pstore/get-stats pstore)]
         (show-stats (:processed pstore-stats) (:errors pstore-stats)
@@ -205,10 +208,8 @@
     (log/info starting-str)
     (dry-mode-warn options)
     (process-paths tenant paths es-url options
-                   (fn [pstore options tenant paths]
-                     (dorun (map #(do (swap! stats-processed inc)
-                                      (pstore/delete pstore tenant false false %))
-                                 paths)))
+                   (fn [pstore options tenant path]
+                     (pstore/delete pstore tenant false false path))
                    "Removing paths" true)
     (catch Exception e
       (clog/unhandled-error e))))
@@ -219,9 +220,9 @@
   (try
     (clog/disable-logging!)
     (process-paths tenant paths es-url options
-                   (fn [pstore options tenant paths]
+                   (fn [pstore options tenant path]
                      (dorun (map println (lookup-paths pstore tenant false
-                                                       false paths))))
+                                                       false [path]))))
                    "Paths" false)
     (catch Exception e
       (clog/unhandled-error e))))
