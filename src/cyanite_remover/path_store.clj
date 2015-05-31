@@ -80,7 +80,7 @@
         _ (log/trace (str "ES search query: " query))
         resp (search-fn :query query :size 100 :search_type "query_then_fetch"
                        :scroll "1m")]
-    (log/trace (str "ES search respond: " resp))
+    (log/trace (str "ES search response: " resp))
     (map #(:_source %) (scroll-fn resp))))
 
 (defn- log-shards-errors
@@ -96,7 +96,7 @@
 (defn- process-response-delete
   "Process response of delete-by-query."
   [response index path stats-errors]
-  (log/trace (str "ES delete respond: " response))
+  (log/trace (str "ES delete response: " response))
   (let [error-fn #(do (log-error (format "Can't get \"%s\" value from response" %)
                                  path stats-errors) false)]
     (if-let [shards (:_shards (get (:_indices response) (keyword index)))]
