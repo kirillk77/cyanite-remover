@@ -203,7 +203,6 @@
                      (swap! stats-processed inc)
                      (when-not @clog/print-log?
                        (prog/tick))
-                     (clog/info (str "Removing path: " %))
                      (process-fn pstore options tenant %))
                   paths))
       (when-not @clog/print-log?
@@ -223,6 +222,7 @@
     (dry-mode-warn options)
     (process-paths tenant paths es-url options
                    (fn [pstore options tenant path]
+                     (clog/info (str "Removing path: " path))
                      (pstore/delete pstore tenant false false path))
                    "Removing paths" true)
     (catch Exception e
