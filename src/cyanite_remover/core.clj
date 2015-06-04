@@ -29,7 +29,7 @@
 (defn- get-paths
   "Get paths."
   [pstore tenant paths-to-lookup]
-  (let [paths (lookup-paths pstore tenant true false paths-to-lookup)
+  (let [paths (lookup-paths pstore tenant false false paths-to-lookup)
         title "Getting paths"]
     (newline)
     (clog/info (str title "..."))
