@@ -1,5 +1,11 @@
 # cyanite-remover changes
 
+## 0.3.1
+
+This is a maintenance release.
+
+* Delete metrics from branches as well
+
 ## 0.3.0
 
 This is a minor feature and bugfix release.
