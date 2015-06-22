@@ -141,7 +141,7 @@
           (let [query (build-query (build-filter tenant leafs-only
                                                  limit-depth path))]
             (log/trace (str "ES delete query: " query))
-            (if run
+            (when run
               (let [response (delete-fn query)]
                 (process-response-delete response index path stats-errors))))
           (catch Exception e
