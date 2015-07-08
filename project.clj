@@ -15,7 +15,7 @@
                  [clojurewerkz/elastisch "2.1.0"]
                  [throttler "1.0.0"]
                  [com.climate/claypoole "1.0.0"]
-                 [clj-time "0.9.0"]
+                 [clj-time "0.10.0"]
                  [intervox/clj-progress "0.2.1"]]
   :main ^:skip-aot cyanite-remover.cli
   :target-path "target/%s"
