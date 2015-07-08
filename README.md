@@ -71,7 +71,15 @@ For more information see [commands](#commands), [arguments](#arguments) and
 * [list-paths](#list-paths)
 * [help](#help)
 
-### Arguments
+#### `remove-metrics`
+
+#### `remove-paths`
+
+#### `list-metrics`
+
+#### `list-paths`
+
+#### `help`
 
 ### Arguments
 
