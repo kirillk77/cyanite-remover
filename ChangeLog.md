@@ -1,5 +1,12 @@
 # cyanite-remover changes
 
+## 0.3.2
+
+This is a minor feature and maintenance release.
+
+* Add the Jarkeeper badge
+* Support question mark in wildcards
+
 ## 0.3.1
 
 This is a maintenance release.
