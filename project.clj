@@ -10,7 +10,7 @@
                  [org.spootnik/logconfig "0.7.3"]
                  [cc.qbits/alia "2.5.2"]
                  [net.jpountz.lz4/lz4 "1.3.0"]
-                 [org.xerial.snappy/snappy-java "1.1.1.6"]
+                 [org.xerial.snappy/snappy-java "1.1.1.7"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [clojurewerkz/elastisch "2.1.0"]
                  [throttler "1.0.0"]
