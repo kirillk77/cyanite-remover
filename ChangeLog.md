@@ -4,6 +4,13 @@
 
 This is a minor feature and maintenance release.
 
+* elastisch 2.2.0-beta4
+* clj-progress 0.2.1
+* claypoole 1.0.0
+* snappy-java 1.1.1.7
+* alia 2.5.2
+* logconfig 0.7.3
+* Clojure 1.7.0
 * Add the license badge
 * Add the Jarkeeper badge
 * Support question mark in wildcards
