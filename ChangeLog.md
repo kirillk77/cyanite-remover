@@ -4,6 +4,7 @@
 
 This is a minor feature and maintenance release.
 
+* Add the license badge
 * Add the Jarkeeper badge
 * Support question mark in wildcards
 
