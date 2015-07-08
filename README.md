@@ -1,6 +1,6 @@
 # cyanite-remover
 
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/cybem/whisper2cyanite/master/LICENSE)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/cybem/cyanite-remover/master/LICENSE)
 [![Build Status](https://travis-ci.org/cybem/cyanite-remover.svg?branch=master)](https://travis-ci.org/cybem/cyanite-remover)
 [![Dependencies Status](http://jarkeeper.com/cybem/cyanite-remover/status.svg)](http://jarkeeper.com/cybem/cyanite-remover)
 
@@ -18,6 +18,9 @@ tool.
   * [Commands](#commands)
   * [Arguments](#arguments)
   * [Options](#options)
+* [Usage Scenarios](#usage-scenarios)
+* [License](#license)
+* [Thanks](#thanks)
 
 ## Building
 
@@ -159,7 +162,7 @@ Set the number of jobs to run simultaneously.
 
 Set the log file.
 
-Default: `whisper2cyanite.log`
+Default: `cyanite-remover.log`
 
 #### `log-level`
 
@@ -192,3 +195,12 @@ Example: 1421280000
 `-S`, `--stop-on-error`
 
 Stop on the first non-fatal error.
+
+## License
+
+cyanite-remover is covered by [MIT License](https://raw.githubusercontent.com/cybem/cyanite-remover/master/LICENSE)
+
+## Thanks
+
+Thanks to [Pierre-Yves Ritschard](https://github.com/pyr) aka @pyr for his work
+on [Cyanite](https://github.com/pyr/cyanite)
