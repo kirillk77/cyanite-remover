@@ -4,7 +4,7 @@
   :license {:name "MIT License"
             :url "https://github.com/cybem/cyanite-remover/blob/master/LICENSE"}
   :maintainer {:email "cybem@cybem.info"}
-  :dependencies [[org.clojure/clojure "1.6.0"]
+  :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/tools.cli "0.3.1"]
                  [org.clojure/tools.logging "0.3.1"]
                  [org.spootnik/logconfig "0.7.2"]
