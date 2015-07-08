@@ -19,6 +19,12 @@ tool.
   * [Arguments](#arguments)
   * [Options](#options)
 * [Usage Scenarios](#usage-scenarios)
+  * [Inspecting](#inspecting)
+    * [Listing Metrics in Cassandra](#listing-metrics-in-cassandra)
+    * [Listing Paths in Elasticsearch](#listing-paths-in-elasticsearch)
+  * [Removing](#removing)
+    * [Removing Metrics from Cassandra](#removing-metrics-from-cassandra)
+    * [Removing Paths from Elasticsearch](#removing-paths-from-elasticsearch)
 * [License](#license)
 * [Thanks](#thanks)
 
@@ -215,6 +221,20 @@ Example: 1421280000
 `-S`, `--stop-on-error`
 
 Stop on the first non-fatal error.
+
+## Usage Scenarios
+
+### Inspecting
+
+#### Listing Metrics in Cassandra
+
+#### Listing Paths in Elasticsearch
+
+### Removing
+
+#### Removing Metrics from Cassandra
+
+#### Removing Paths from Elasticsearch
 
 ## License
 
