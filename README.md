@@ -79,13 +79,36 @@ For more information see [commands](#commands), [arguments](#arguments) and
 
 #### `remove-metrics`
 
+Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
+[`cassandra-batch-size`](#cassandra-batch-size),
+[`cassandra-channel-size`](#cassandra-channel-size),
+[`cassandra-keyspace`](#cassandra-keyspace),
+[`cassandra-options`](#cassandra-options), [`disable-log`](#disable-log),
+[`disable-progress`](#disable-progress),
+[`elasticsearch-index`](#elasticsearch-index), [`from`](#from),
+[`jobs`](#jobs), [`log-file`](#log-file), [`log-level`](#log-level),
+[`run`](#run), [`to`](#to), [`stop-on-error`](#stop-on-error).
+
 #### `remove-paths`
+
+Available options: [`disable-log`](#disable-log),
+[`disable-progress`](#disable-progress),
+[`elasticsearch-index`](#elasticsearch-index), [`log-file`](#log-file),
+[`log-level`](#log-level), [`run`](#run).
 
 #### `list-metrics`
 
+Available options: [`cassandra-keyspace`](#cassandra-keyspace),
+[`cassandra-options`](#cassandra-options),
+[`elasticsearch-index`](#elasticsearch-index), [`from`](#from), [`to`](#to).
+
 #### `list-paths`
 
+Available options: [`elasticsearch-index`](#elasticsearch-index).
+
 #### `help`
+
+Show help.
 
 ### Arguments
 
