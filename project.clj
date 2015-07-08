@@ -7,7 +7,7 @@
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/tools.cli "0.3.1"]
                  [org.clojure/tools.logging "0.3.1"]
-                 [org.spootnik/logconfig "0.7.2"]
+                 [org.spootnik/logconfig "0.7.3"]
                  [cc.qbits/alia "2.3.1"]
                  [net.jpountz.lz4/lz4 "1.3.0"]
                  [org.xerial.snappy/snappy-java "1.1.1.6"]
