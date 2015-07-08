@@ -65,7 +65,19 @@ For more information see [commands](#commands), [arguments](#arguments) and
 
 ### Commands
 
+* [remove-metrics](#remove-metrics)
+* [remove-paths](#remove-paths)
+* [list-metrics](#list-metrics)
+* [list-paths](#list-paths)
+* [help](#help)
+
 ### Arguments
+
+### Arguments
+
+* [tenant](#tenant)
+* [cassandra_host(s)](#cassandra_hosts)
+* [elasticsearch_url](#elasticsearch_url)
 
 ### Options
 
