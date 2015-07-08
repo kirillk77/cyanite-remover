@@ -13,6 +13,11 @@ tool.
   * [Dependencies](#dependencies)
   * [Building a Standalone JAR-file](#building-a-standalone-jar-file)
   * [Building a Deb-package](#building-a-deb-package)
+* [Usage](#usage)
+  * [Quick Help](#quick-help)
+  * [Commands](#commands)
+  * [Arguments](#arguments)
+  * [Options](#options)
 
 ## Building
 
