@@ -78,7 +78,7 @@
                      (filter #(not (nil? %)))
                      (flatten)
                      (apply hash-map))
-        paths (str/split (nth arguments 2) #",")
+        paths (str/split (nth arguments 2) #";")
         cass-hosts (str/split (nth arguments 3) #",")
         es-url (nth arguments 4)]
     {:tenant tenant :rollups rollups :paths paths :cass-hosts cass-hosts
