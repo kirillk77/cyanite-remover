@@ -60,9 +60,9 @@ Built package will be placed in the `target` directory.
 
 ### Quick Help
 
-    cyanite-remover [options] remove-metrics <tenant> <rollup:period,...> <path,...> <cassandra_host,...> <elasticsearch_url>
+    cyanite-remover [options] remove-metrics <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>
     cyanite-remover [options] remove-paths <tenant> <path,...> <elasticsearch_url>
-    cyanite-remover [options] list-metrics <tenant> <rollup:period,...> <path,...> <cassandra_host,...> <elasticsearch_url>
+    cyanite-remover [options] list-metrics <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>
     cyanite-remover [options] list-paths <tenant> <path,...> <elasticsearch_url>
     cyanite-remover help
 
@@ -113,6 +113,8 @@ Show help.
 ### Arguments
 
 * [tenant](#tenant)
+* [rollup(s)](#rollups)
+* [path(s)](#paths)
 * [cassandra_host(s)](#cassandra_hosts)
 * [elasticsearch_url](#elasticsearch_url)
 
