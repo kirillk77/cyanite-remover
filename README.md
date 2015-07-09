@@ -97,7 +97,7 @@ Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 See example of usage [here](#removing-metrics-from-cassandra).
 
 **Before removing data, [make sure](#inspecting) that you remove the desired
-data**.
+data.**
 
 #### `remove-paths`
 
@@ -112,6 +112,9 @@ Available options: [`disable-log`](#disable-log),
 [`log-level`](#log-level), [`run`](#run).
 
 See example of usage [here](#removing-paths-from-elasticsearch).
+
+**Before removing data, [make sure](#inspecting) that you remove the desired
+data.**
 
 #### `list-metrics`
 
