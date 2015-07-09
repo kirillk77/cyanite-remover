@@ -156,18 +156,21 @@ A comma-separated list of rollups.
 
 Format: `<seconds_per_point:retention,...>`
 
-Example: 60:5356800,900:62208000
+Example: `60:5356800,900:62208000`
 
 #### `path(s)`
 
 A comma-separated list of paths.
 
 Accepted wildcards are:
-* An asterisk (`*`). Matches any number of characters. Example: requests.nginx.*
-* A question mark (`?`). Matches a single character only. Example: node1.cpu.?
+* An asterisk (`*`). Matches any number of characters. Example:
+  `requests.nginx.*`
+* A question mark (`?`). Matches a single character only. Example:
+  `node1.cpu.?`
 * A list (`{path1,path2,...}`). Matches any string in a list. Example:
-  {nginx,apache}.cpu.0
-* A range (`[m-n]`). Matches any number in a range. Example: node[3-17].cpu.0
+  `{nginx,apache}.cpu.0`
+* A range (`[M-N]`). Matches any number in the range from `M` to `N`. Example:
+  `node[3-17].cpu.0`
 
 #### `cassandra_host(s)`
 
