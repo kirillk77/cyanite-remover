@@ -160,7 +160,7 @@ Example: `60:5356800,900:62208000`
 
 #### `path(s)`
 
-A comma-separated list of paths.
+A semicolon-separated list of paths.
 
 Accepted wildcards are:
 * An asterisk `*`. Matches any number of characters. Example:
@@ -171,6 +171,8 @@ Accepted wildcards are:
   `{nginx,apache}.cpu.0`
 * A range `[M-N]`. Matches any number in the range from `M` to `N`. Example:
   `node[3-17].cpu.0`
+
+Example: `"requests.nginx.*;node[3-17].cpu.?"`
 
 #### `cassandra_host(s)`
 
@@ -323,13 +325,13 @@ Before removing data, you may want to inspect the data to be removed.
 
 ```bash
 cyanite-remover list-metrics my_tenant 60:5356800,900:62208000 \
-  "requests.nginx.*,node[3-17].cpu.?" cass1.example.org \
+  "requests.nginx.*;node[3-17].cpu.?" cass1.example.org \
   http://es.example.org:9200
 ```
 #### Listing Paths from Elasticsearch
 
 ```bash
-cyanite-remover list-paths my_tenant "requests.nginx.*,node[3-17].cpu.?" \
+cyanite-remover list-paths my_tenant "requests.nginx.*;node[3-17].cpu.?" \
   http://es.example.org:9200
 ```
 
@@ -340,7 +342,7 @@ cyanite-remover list-paths my_tenant "requests.nginx.*,node[3-17].cpu.?" \
 ```bash
 cyanite-remover --run --jobs 8 --cassandra-options "{:compression :lz4}" \
   remove-metrics my_tenant 60:5356800,900:62208000 \
-  "requests.nginx.*,node[3-17].cpu.?" cass1.example.org \
+  "requests.nginx.*;node[3-17].cpu.?" cass1.example.org \
   http://es.example.org:9200
 ```
 
@@ -348,7 +350,7 @@ cyanite-remover --run --jobs 8 --cassandra-options "{:compression :lz4}" \
 
 ```bash
 cyanite-remover --run remove-paths my_tenant \
-  "requests.nginx.*,node[3-17].cpu.?" http://es.example.org:9200
+  "requests.nginx.*;node[3-17].cpu.?" http://es.example.org:9200
 ```
 
 ## License
