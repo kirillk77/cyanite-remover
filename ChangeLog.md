@@ -4,6 +4,7 @@
 
 This is a minor feature and maintenance release.
 
+* Use retention instead of period in CLI
 * elastisch 2.2.0-beta4
 * clj-progress 0.2.1
 * claypoole 1.0.0
