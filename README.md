@@ -79,6 +79,9 @@ For more information see [commands](#commands), [arguments](#arguments) and
 
 #### `remove-metrics`
 
+Arguments: [tenant](#tenant), [rollup(s)](#rollups), [path(s)](#paths),
+[cassandra_host(s)](#cassandra_hosts), [elasticsearch_url](#elasticsearch_url).
+
 Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 [`cassandra-batch-size`](#cassandra-batch-size),
 [`cassandra-channel-size`](#cassandra-channel-size),
@@ -91,6 +94,9 @@ Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 
 #### `remove-paths`
 
+Arguments: [tenant](#tenant), [path(s)](#paths),
+[elasticsearch_url](#elasticsearch_url).
+
 Available options: [`disable-log`](#disable-log),
 [`disable-progress`](#disable-progress),
 [`elasticsearch-index`](#elasticsearch-index), [`log-file`](#log-file),
@@ -98,11 +104,17 @@ Available options: [`disable-log`](#disable-log),
 
 #### `list-metrics`
 
+Arguments: [tenant](#tenant), [rollup(s)](#rollups), [path(s)](#paths),
+[cassandra_host(s)](#cassandra_hosts), [elasticsearch_url](#elasticsearch_url).
+
 Available options: [`cassandra-keyspace`](#cassandra-keyspace),
 [`cassandra-options`](#cassandra-options),
 [`elasticsearch-index`](#elasticsearch-index), [`from`](#from), [`to`](#to).
 
 #### `list-paths`
+
+Arguments: [tenant](#tenant), [path(s)](#paths),
+[elasticsearch_url](#elasticsearch_url).
 
 Available options: [`elasticsearch-index`](#elasticsearch-index).
 
@@ -117,6 +129,16 @@ Show help.
 * [path(s)](#paths)
 * [cassandra_host(s)](#cassandra_hosts)
 * [elasticsearch_url](#elasticsearch_url)
+
+#### `tenant`
+
+#### `rollup(s)`
+
+#### `path(s)`
+
+#### `cassandra_host(s)`
+
+#### `elasticsearch_url`
 
 ### Options
 
