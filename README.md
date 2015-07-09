@@ -66,8 +66,8 @@ Built package will be placed in the `target` directory.
     cyanite-remover [options] list-paths <tenant> <path,...> <elasticsearch_url>
     cyanite-remover help
 
-For more information see [commands](#commands), [arguments](#arguments) and
-[options](#options).
+See [commands](#commands), [arguments](#arguments) and [options](#options) for
+more details.
 
 ### Commands
 
@@ -248,7 +248,9 @@ Default: `metric`
 
 `-O`, `--cassandra-options` `OPTIONS`
 
-Set Cassandra options.
+Set Cassandra options. See
+[Alia documentation](https://mpenet.github.io/alia/qbits.alia.html#var-cluster)
+for more details.
 
 Example: `"{:compression :lz4}"`
 
