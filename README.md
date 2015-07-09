@@ -92,6 +92,8 @@ Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 [`jobs`](#jobs), [`log-file`](#log-file), [`log-level`](#log-level),
 [`run`](#run), [`to`](#to), [`stop-on-error`](#stop-on-error).
 
+See example of usage [here](#removing-metrics-from-cassandra).
+
 #### `remove-paths`
 
 Arguments: [tenant](#tenant), [path(s)](#paths),
@@ -102,6 +104,8 @@ Available options: [`disable-log`](#disable-log),
 [`elasticsearch-index`](#elasticsearch-index), [`log-file`](#log-file),
 [`log-level`](#log-level), [`run`](#run).
 
+See example of usage [here](#removing-paths-from-elasticsearch).
+
 #### `list-metrics`
 
 Arguments: [tenant](#tenant), [rollup(s)](#rollups), [path(s)](#paths),
@@ -111,12 +115,16 @@ Available options: [`cassandra-keyspace`](#cassandra-keyspace),
 [`cassandra-options`](#cassandra-options),
 [`elasticsearch-index`](#elasticsearch-index), [`from`](#from), [`to`](#to).
 
+See example of usage [here](#listing-metrics-from-cassandra).
+
 #### `list-paths`
 
 Arguments: [tenant](#tenant), [path(s)](#paths),
 [elasticsearch_url](#elasticsearch_url).
 
 Available options: [`elasticsearch-index`](#elasticsearch-index).
+
+See example of usage [here](#listing-paths-from-elasticsearch).
 
 #### `help`
 
