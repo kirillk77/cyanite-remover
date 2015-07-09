@@ -163,26 +163,26 @@ Example: `60:5356800,900:62208000`
 A comma-separated list of paths.
 
 Accepted wildcards are:
-* An asterisk (`*`). Matches any number of characters. Example:
+* An asterisk `*`. Matches any number of characters. Example:
   `requests.nginx.*`
-* A question mark (`?`). Matches a single character only. Example:
+* A question mark `?`. Matches a single character only. Example:
   `node1.cpu.?`
-* A list (`{path1,path2,...}`). Matches any string in a list. Example:
+* A list `{path1,path2,...}`. Matches any string in a list. Example:
   `{nginx,apache}.cpu.0`
-* A range (`[M-N]`). Matches any number in the range from `M` to `N`. Example:
+* A range `[M-N]`. Matches any number in the range from `M` to `N`. Example:
   `node[3-17].cpu.0`
 
 #### `cassandra_host(s)`
 
 A comma-separated list of Cassandra hosts.
 
-Example: cass1.example.org,cass2.example.org
+Example: `cass1.example.org,cass2.example.org`
 
 #### `elasticsearch_url`
 
 An Elasticsearch REST service URL.
 
-Example: http://es.example.org:9200
+Example: `http://es.example.org:9200`
 
 ### Options
 
@@ -242,7 +242,7 @@ Default: `metric`
 
 Set Cassandra options.
 
-Example: "{:compression :lz4}"
+Example: `"{:compression :lz4}"`
 
 #### `disable-progress`
 
@@ -265,7 +265,7 @@ Default: `cyanite_paths`
 Set from time in the
 [Unix (POSIX, epoch) time](https://en.wikipedia.org/wiki/Unix_time) format.
 
-Example: 1420070400
+Example: `1420070400`
 
 #### `jobs`
 
@@ -305,7 +305,7 @@ Force a normal run. **Dry run using on default**.
 Set until time in the
 [Unix (POSIX, epoch) time](https://en.wikipedia.org/wiki/Unix_time) format.
 
-Example: 1421280000
+Example: `1421280000`
 
 #### `stop-on-error`
 
