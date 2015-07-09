@@ -20,8 +20,8 @@ tool.
   * [Options](#options)
 * [Usage Scenarios](#usage-scenarios)
   * [Inspecting](#inspecting)
-    * [Listing Metrics in Cassandra](#listing-metrics-in-cassandra)
-    * [Listing Paths in Elasticsearch](#listing-paths-in-elasticsearch)
+    * [Listing Metrics from Cassandra](#listing-metrics-from-cassandra)
+    * [Listing Paths from Elasticsearch](#listing-paths-from-elasticsearch)
   * [Removing](#removing)
     * [Removing Metrics from Cassandra](#removing-metrics-from-cassandra)
     * [Removing Paths from Elasticsearch](#removing-paths-from-elasticsearch)
@@ -132,13 +132,23 @@ Show help.
 
 #### `tenant`
 
+A tenant name.
+
 #### `rollup(s)`
 
 #### `path(s)`
 
 #### `cassandra_host(s)`
 
+A comma-separated list of Cassandra hosts.
+
+Example: cass1.example.org,cass2.example.org
+
 #### `elasticsearch_url`
+
+An Elasticsearch REST service URL.
+
+Example: http://es.example.org:9200
 
 ### Options
 
@@ -273,9 +283,9 @@ Stop on the first non-fatal error.
 
 ### Inspecting
 
-#### Listing Metrics in Cassandra
+#### Listing Metrics from Cassandra
 
-#### Listing Paths in Elasticsearch
+#### Listing Paths from Elasticsearch
 
 ### Removing
 
