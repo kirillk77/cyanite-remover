@@ -113,7 +113,7 @@ Available options: [`disable-log`](#disable-log),
 
 See example of usage [here](#removing-paths-from-elasticsearch).
 
-**Before removing data, [make sure](#listing-metrics-from-elasticsearch) that
+**Before removing data, [make sure](#listing-paths-from-elasticsearch) that
 you remove the desired data.**
 
 #### `list-metrics`
