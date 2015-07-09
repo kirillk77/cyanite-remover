@@ -1,8 +1,8 @@
 # cyanite-remover changes
 
-## 0.3.2
+## 0.4.0
 
-This is a minor feature and maintenance release.
+This is a minor feature and bugfix release.
 
 * Use retention instead of period in CLI
 * elastisch 2.2.0-beta4
