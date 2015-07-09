@@ -16,8 +16,12 @@
   [rollups]
   (->> (str/split rollups #",")
        (map #(re-matches #"^((\d+):(\d+))$" %))
-       (map #(if % [(Integer/parseInt (nth % 2))
-                    (Integer/parseInt (nth % 3))] %))))
+       (map #(if %
+               (let [seconds-per-point (Integer/parseInt (nth % 2))
+                     retention (Integer/parseInt (nth % 3))
+                     period (/ retention seconds-per-point)]
+                 [seconds-per-point period])
+               %))))
 
 (defn- usage
   "Construct usage message."
@@ -25,9 +29,9 @@
   (->> ["A Cyanite data removal tool"
         ""
         "Usage: "
-        "  cyanite-remover [options] remove-metrics <tenant> <rollup:period,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
+        "  cyanite-remover [options] remove-metrics <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
         "  cyanite-remover [options] remove-paths <tenant> <path,...> <elasticsearch_url>"
-        "  cyanite-remover [options] list-metrics <tenant> <rollup:period,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
+        "  cyanite-remover [options] list-metrics <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
         "  cyanite-remover [options] list-paths <tenant> <path,...> <elasticsearch_url>"
         "  cyanite-remover help"
         ""
