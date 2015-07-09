@@ -79,6 +79,8 @@ For more information see [commands](#commands), [arguments](#arguments) and
 
 #### `remove-metrics`
 
+Remove metrics from Cassandra.
+
 Arguments: [tenant](#tenant), [rollup(s)](#rollups), [path(s)](#paths),
 [cassandra_host(s)](#cassandra_hosts), [elasticsearch_url](#elasticsearch_url).
 
@@ -96,6 +98,8 @@ See example of usage [here](#removing-metrics-from-cassandra).
 
 #### `remove-paths`
 
+Remove paths from Elasticsearch.
+
 Arguments: [tenant](#tenant), [path(s)](#paths),
 [elasticsearch_url](#elasticsearch_url).
 
@@ -108,6 +112,8 @@ See example of usage [here](#removing-paths-from-elasticsearch).
 
 #### `list-metrics`
 
+List metrics from Cassandra.
+
 Arguments: [tenant](#tenant), [rollup(s)](#rollups), [path(s)](#paths),
 [cassandra_host(s)](#cassandra_hosts), [elasticsearch_url](#elasticsearch_url).
 
@@ -118,6 +124,8 @@ Available options: [`cassandra-keyspace`](#cassandra-keyspace),
 See example of usage [here](#listing-metrics-from-cassandra).
 
 #### `list-paths`
+
+List paths from Elasticsearch.
 
 Arguments: [tenant](#tenant), [path(s)](#paths),
 [elasticsearch_url](#elasticsearch_url).
@@ -296,6 +304,8 @@ Stop on the first non-fatal error.
 ## Usage Scenarios
 
 ### Inspecting
+
+Before removing data, you may want to inspect the data to be removed.
 
 #### Listing Metrics from Cassandra
 
