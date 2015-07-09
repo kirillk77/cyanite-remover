@@ -144,6 +144,12 @@ A tenant name.
 
 #### `rollup(s)`
 
+A comma-separated list of rollups.
+
+Format: `<seconds_per_point:retention,...>`
+
+Example: 60:5356800,900:62208000
+
 #### `path(s)`
 
 #### `cassandra_host(s)`
@@ -293,13 +299,35 @@ Stop on the first non-fatal error.
 
 #### Listing Metrics from Cassandra
 
+```bash
+cyanite-remover list-metrics my_tenant 60:5356800,900:62208000 \
+  "requests.nginx.*,nodes[3-17].cpu.?" cass1.example.org \
+  http://es.example.org:9200
+```
 #### Listing Paths from Elasticsearch
+
+```bash
+cyanite-remover list-paths my_tenant "requests.nginx.*,nodes[3-17].cpu.?" \
+  http://es.example.org:9200
+```
 
 ### Removing
 
 #### Removing Metrics from Cassandra
 
+```bash
+cyanite-remover --run --jobs 8 --cassandra-options "{:compression :lz4}" \
+  remove-metrics my_tenant 60:5356800,900:62208000 \
+  "requests.nginx.*,nodes[3-17].cpu.?" cass1.example.org \
+  http://es.example.org:9200
+```
+
 #### Removing Paths from Elasticsearch
+
+```bash
+cyanite-remover --run remove-paths my_tenant \
+  "requests.nginx.*,nodes[3-17].cpu.?" http://es.example.org:9200
+```
 
 ## License
 
