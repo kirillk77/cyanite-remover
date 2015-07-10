@@ -105,8 +105,8 @@ remove the desired data.**
 
 Remove paths from Elasticsearch.
 
-*`cyanite-remover` `remove-paths`* [*`tenant`*](#tenant),
-[*`path(s)`*](#paths), [*`elasticsearch_url`*](#elasticsearch_url).
+*`cyanite-remover` `remove-paths`* [*`tenant`*](#tenant)
+[*`path(s)`*](#paths) [*`elasticsearch_url`*](#elasticsearch_url)
 
 Available options: [`disable-log`](#disable-log),
 [`disable-progress`](#disable-progress),
@@ -122,10 +122,10 @@ you remove the desired data.**
 
 List metrics from Cassandra.
 
-*`cyanite-remover` `list-metrics`* [*`tenant`*](#tenant),
-[*`rollup(s)`*](#rollups), [*`path(s)`*](#paths),
-[*`cassandra_host(s)`*](#cassandra_hosts),
-[*`elasticsearch_url`*](#elasticsearch_url).
+*`cyanite-remover` `list-metrics`* [*`tenant`*](#tenant)
+[*`rollup(s)`*](#rollups) [*`path(s)`*](#paths)
+[*`cassandra_host(s)`*](#cassandra_hosts)
+[*`elasticsearch_url`*](#elasticsearch_url)
 
 Available options: [`cassandra-keyspace`](#cassandra-keyspace),
 [`cassandra-options`](#cassandra-options),
