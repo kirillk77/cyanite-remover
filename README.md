@@ -137,8 +137,8 @@ See example of usage [here](#listing-metrics-from-cassandra).
 
 List paths from Elasticsearch.
 
-Arguments: [tenant](#tenant), [path(s)](#paths),
-[elasticsearch_url](#elasticsearch_url).
+*`cyanite-remover` `list-paths`* [*`tenant`*](#tenant) [*`path(s)`*](#paths)
+[*`elasticsearch_url`*](#elasticsearch_url)
 
 Available options: [`elasticsearch-index`](#elasticsearch-index).
 
