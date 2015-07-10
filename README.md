@@ -99,7 +99,7 @@ Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 See example of usage [here](#removing-metrics-from-cassandra).
 
 **Before removing data, [make sure](#listing-metrics-from-cassandra) that you
-remove the desired data.**
+remove the desired data!**
 
 #### `remove-paths`
 
@@ -115,8 +115,11 @@ Available options: [`disable-log`](#disable-log),
 
 See example of usage [here](#removing-paths-from-elasticsearch).
 
-**Before removing data, [make sure](#listing-paths-from-elasticsearch) that
-you remove the desired data.**
+**Before removing data, [make sure](#listing-paths-from-elasticsearch) that you
+remove the desired data!**
+
+**Always remove metrics first. Deletion of paths will make it impossible to
+remove relevant metrics!**
 
 #### `list-metrics`
 
@@ -366,7 +369,7 @@ cyanite-remover --run --jobs 8 --cassandra-options "{:compression :lz4}" \
 See command [remove-metrics](#remove-metrics) for more details.
 
 **Before removing data, [make sure](#listing-metrics-from-cassandra) that you
-remove the desired data.**
+remove the desired data!**
 
 #### Removing Paths from Elasticsearch
 
@@ -378,7 +381,10 @@ cyanite-remover --run remove-paths my_tenant \
 See command [remove-paths](#remove-paths) for more details.
 
 **Before removing data, [make sure](#listing-paths-from-elasticsearch) that you
-remove the desired data.**
+remove the desired data!**
+
+**Always remove metrics first. Deletion of paths will make it impossible to
+remove relevant metrics!**
 
 ## License
 
