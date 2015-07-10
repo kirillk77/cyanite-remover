@@ -81,8 +81,8 @@ more details.
 
 Remove metrics from Cassandra.
 
-*`cyanite-remover` `remove-metrics`* [*`tenant`*](#tenant)
-[*`rollup(s)`*](#rollups) [*`path(s)`*](#paths)
+*`cyanite-remover` `remove-metrics`* [[*`options`*](#options)]
+[*`tenant`*](#tenant) [*`rollup(s)`*](#rollups) [*`path(s)`*](#paths)
 [*`cassandra_host(s)`*](#cassandra_hosts)
 [*`elasticsearch_url`*](#elasticsearch_url)
 
@@ -105,8 +105,9 @@ remove the desired data!**
 
 Remove paths from Elasticsearch.
 
-*`cyanite-remover` `remove-paths`* [*`tenant`*](#tenant)
-[*`path(s)`*](#paths) [*`elasticsearch_url`*](#elasticsearch_url)
+*`cyanite-remover` `remove-paths`* [[*`options`*](#options)]
+[*`tenant`*](#tenant) [*`path(s)`*](#paths)
+[*`elasticsearch_url`*](#elasticsearch_url)
 
 Available options: [`disable-log`](#disable-log),
 [`disable-progress`](#disable-progress),
@@ -125,8 +126,8 @@ remove relevant metrics!**
 
 List metrics from Cassandra.
 
-*`cyanite-remover` `list-metrics`* [*`tenant`*](#tenant)
-[*`rollup(s)`*](#rollups) [*`path(s)`*](#paths)
+*`cyanite-remover` `list-metrics`* [[*`options`*](#options)]
+[*`tenant`*](#tenant) [*`rollup(s)`*](#rollups) [*`path(s)`*](#paths)
 [*`cassandra_host(s)`*](#cassandra_hosts)
 [*`elasticsearch_url`*](#elasticsearch_url)
 
@@ -140,7 +141,8 @@ See example of usage [here](#listing-metrics-from-cassandra).
 
 List paths from Elasticsearch.
 
-*`cyanite-remover` `list-paths`* [*`tenant`*](#tenant) [*`path(s)`*](#paths)
+*`cyanite-remover` `list-paths`* [[*`options`*](#options)]
+[*`tenant`*](#tenant) [*`path(s)`*](#paths)
 [*`elasticsearch_url`*](#elasticsearch_url)
 
 Available options: [`elasticsearch-index`](#elasticsearch-index).
