@@ -365,6 +365,9 @@ cyanite-remover --run --jobs 8 --cassandra-options "{:compression :lz4}" \
 
 See command [remove-metrics](#remove-metrics) for more details.
 
+**Before removing data, [make sure](#listing-metrics-from-cassandra) that you
+remove the desired data.**
+
 #### Removing Paths from Elasticsearch
 
 ```bash
@@ -373,6 +376,9 @@ cyanite-remover --run remove-paths my_tenant \
 ```
 
 See command [remove-paths](#remove-paths) for more details.
+
+**Before removing data, [make sure](#listing-paths-from-cassandra) that you
+remove the desired data.**
 
 ## License
 
