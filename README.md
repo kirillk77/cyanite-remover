@@ -344,7 +344,7 @@ cyanite-remover list-metrics my_tenant 60:5356800,900:62208000 \
   http://es.example.org:9200
 ```
 
-See command [list-metrics](#list-metrics) for more details.
+See command [`list-metrics`](#list-metrics) for more details.
 
 #### Listing Paths from Elasticsearch
 
@@ -353,7 +353,7 @@ cyanite-remover list-paths my_tenant "requests.nginx.*;node[3-17].cpu.?" \
   http://es.example.org:9200
 ```
 
-See command [list-paths](#list-paths) for more details.
+See command [`list-paths`](#list-paths) for more details.
 
 ### Removing
 
@@ -366,7 +366,7 @@ cyanite-remover --run --jobs 8 --cassandra-options "{:compression :lz4}" \
   http://es.example.org:9200
 ```
 
-See command [remove-metrics](#remove-metrics) for more details.
+See command [`remove-metrics`](#remove-metrics) for more details.
 
 **Before removing data, [make sure](#listing-metrics-from-cassandra) that you
 remove the desired data!**
@@ -378,7 +378,7 @@ cyanite-remover --run remove-paths my_tenant \
   "requests.nginx.*;node[3-17].cpu.?" http://es.example.org:9200
 ```
 
-See command [remove-paths](#remove-paths) for more details.
+See command [`remove-paths`](#remove-paths) for more details.
 
 **Before removing data, [make sure](#listing-paths-from-elasticsearch) that you
 remove the desired data!**
