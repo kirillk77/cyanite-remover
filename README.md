@@ -149,6 +149,8 @@ See example of usage [here](#listing-paths-from-elasticsearch).
 
 #### `help`
 
+*`cyanite-remover` `help`*
+
 Show help.
 
 ### Arguments
