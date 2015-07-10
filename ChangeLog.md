@@ -2,7 +2,7 @@
 
 ## 0.4.0
 
-This is a minor feature and bugfix release.
+This is a minor feature, maintenance and bugfix release.
 
 * Use semicolons instead of commas in paths
 * Use retention instead of period in CLI
