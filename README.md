@@ -81,9 +81,11 @@ more details.
 
 Remove metrics from Cassandra.
 
+---
 *`cyanite-remover remove-metrics`* [*`tenant`*](#tenant) [`rollup(s)`](#rollups)
 [`path(s)`](#paths) [`cassandra_host(s)`](#cassandra_hosts)
 [`elasticsearch_url`](#elasticsearch_url)
+---
 
 Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 [`cassandra-batch-size`](#cassandra-batch-size),
