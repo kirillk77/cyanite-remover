@@ -377,7 +377,7 @@ cyanite-remover --run remove-paths my_tenant \
 
 See command [remove-paths](#remove-paths) for more details.
 
-**Before removing data, [make sure](#listing-paths-from-cassandra) that you
+**Before removing data, [make sure](#listing-paths-from-elasticsearch) that you
 remove the desired data.**
 
 ## License
