@@ -336,12 +336,17 @@ cyanite-remover list-metrics my_tenant 60:5356800,900:62208000 \
   "requests.nginx.*;node[3-17].cpu.?" cass1.example.org \
   http://es.example.org:9200
 ```
+
+See command [list-metrics](#list-metrics) for more details.
+
 #### Listing Paths from Elasticsearch
 
 ```bash
 cyanite-remover list-paths my_tenant "requests.nginx.*;node[3-17].cpu.?" \
   http://es.example.org:9200
 ```
+
+See command [list-paths](#list-paths) for more details.
 
 ### Removing
 
@@ -354,12 +359,16 @@ cyanite-remover --run --jobs 8 --cassandra-options "{:compression :lz4}" \
   http://es.example.org:9200
 ```
 
+See command [remove-metrics](#remove-metrics) for more details.
+
 #### Removing Paths from Elasticsearch
 
 ```bash
 cyanite-remover --run remove-paths my_tenant \
   "requests.nginx.*;node[3-17].cpu.?" http://es.example.org:9200
 ```
+
+See command [remove-paths](#remove-paths) for more details.
 
 ## License
 
