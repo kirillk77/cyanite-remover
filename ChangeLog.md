@@ -4,6 +4,7 @@
 
 This is a minor feature, maintenance and bugfix release.
 
+* Write the user's guide
 * Use semicolons instead of commas in paths
 * Use retention instead of period in CLI
 * elastisch 2.2.0-beta4
