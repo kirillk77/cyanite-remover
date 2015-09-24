@@ -1,5 +1,19 @@
 # cyanite-remover changes
 
+## 0.5.0
+
+This is a feature and maintenance release.
+
+* Add the `remove-obsolete-data` command
+* Add the `list-obsolete-data` command
+* Enable the `--jobs` option for the `remove-paths` command
+* Reorder priority of search paths of the jar-file
+* Use protocols in core
+* tools.cli 0.3.3
+* claypoole 1.1.0
+* clj-time 0.11.0
+* snappy-java 1.1.2
+
 ## 0.4.0
 
 This is a minor feature, maintenance and bugfix release.
