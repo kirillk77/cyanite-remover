@@ -8,8 +8,8 @@
             [org.spootnik.logconfig :as logconfig])
   (:gen-class))
 
-(def cli-commands #{"remove-metrics" "remove-paths" "list-metrics" "list-paths"
-                    "help"})
+(def cli-commands #{"remove-metrics" "remove-paths" "remove-obsolete-data"
+                    "list-metrics" "list-paths" "list-obsolete-data" "help"})
 
 (defn- parse-rollups
   "Parse rollups."
@@ -31,8 +31,10 @@
         "Usage: "
         "  cyanite-remover [options] remove-metrics <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
         "  cyanite-remover [options] remove-paths <tenant> <path,...> <elasticsearch_url>"
+        "  cyanite-remover [options] remove-obsolete-data <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
         "  cyanite-remover [options] list-metrics <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
         "  cyanite-remover [options] list-paths <tenant> <path,...> <elasticsearch_url>"
+        "  cyanite-remover [options] list-obsolete-data <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
         "  cyanite-remover help"
         ""
         "Options:"
@@ -109,11 +111,25 @@
                 options]} (prepare-metrics-args arguments options)]
     (core/remove-metrics tenant rollups paths cass-hosts es-url options)))
 
+(defn- run-remove-obsolete-data
+  "Run command 'remove-obsolete-data'."
+  [command arguments options summary]
+  (check-arguments "remove-obsolete-data" arguments 5 5)
+  (check-options command #{:threshold :run :jobs :cassandra-keyspace
+                           :cassandra-options :cassandra-channel-size
+                           :cassandra-batch-size :cassandra-batch-rate
+                           :elasticsearch-index :log-file :log-level
+                           :disable-log :stop-on-error :disable-progress}
+                 options)
+  (let [{:keys [tenant rollups paths cass-hosts es-url
+                options]} (prepare-metrics-args arguments options)]
+    (core/remove-obsolete-data tenant rollups paths cass-hosts es-url options)))
+
 (defn- run-remove-paths
   "Run command 'remove-paths'."
   [command arguments options summary]
   (check-arguments "remove-paths" arguments 3 3)
-  (check-options command #{:run :elasticsearch-index :log-file :log-level
+  (check-options command #{:run :jobs :elasticsearch-index :log-file :log-level
                            :disable-log :disable-progress}
                  options)
   (let [{:keys [tenant paths es-url
@@ -140,6 +156,17 @@
                 options]} (prepare-paths-args arguments options)]
     (core/list-paths tenant paths es-url options)))
 
+(defn- run-list-obsolete-data
+  "Run command 'list-obsolete-data'."
+  [command arguments options summary]
+  (check-arguments "list-obsolete-data" arguments 5 5)
+  (check-options command #{:threshold :cassandra-keyspace :cassandra-options
+                           :elasticsearch-index}
+                 options)
+  (let [{:keys [tenant rollups paths cass-hosts es-url
+                options]} (prepare-metrics-args arguments options)]
+    (core/list-obsolete-data tenant rollups paths cass-hosts es-url options)))
+
 (defn- run-help
   "Run command 'help'."
   [command arguments options summary]
@@ -150,6 +177,10 @@
     :parse-fn #(Integer/parseInt %)
     :validate [#(<= 0 %) "Must be a number >= 0"]]
    ["-t" "--to TO" "To time (Unix epoch)"
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 %) "Must be a number > 0"]]
+   ["-T" "--threshold THRESHOLD" (str "Threshold in seconds. Default: "
+                                      core/default-obsolete-metrics-threshold)
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 %) "Must be a number > 0"]]
    ["-r" "--run" "Force normal run (dry run using on default)"]

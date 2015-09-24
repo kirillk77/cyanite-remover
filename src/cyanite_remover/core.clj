@@ -6,12 +6,15 @@
             [clj-progress.core :as prog]
             [clojure.tools.logging :as log]
             [clj-time.core :as time]
+            [clj-time.coerce :as timec]
+            [clj-time.format :as timef]
             [cyanite-remover.logging :as clog]
             [cyanite-remover.metric-store :as mstore]
             [cyanite-remover.path-store :as pstore]
             [com.climate.claypoole :as cp]))
 
 (def ^:const default-jobs 1)
+(def ^:const default-obsolete-metrics-threshold 2678400)
 
 (def ^:const pbar-width 35)
 
@@ -19,6 +22,20 @@
 
 (def list-metrics-str "Path: %s, rollup: %s, period: %s, time: %s, data: %s")
 (def starting-str "==================== Starting ====================")
+
+(defprotocol MetricProcessor
+  "Metric processing protocol."
+  (mp-get-title [this])
+  (mp-get-paths [this])
+  (mp-get-paths-rollups [this])
+  (mp-process [this rollup period path from to])
+  (mp-show-stats [this errors]))
+
+(defprotocol PathProcessor
+  "Path processing protocol."
+  (pp-get-title [this])
+  (pp-process [this path])
+  (pp-show-stats [this errors]))
 
 (defn- lookup-paths
   "Lookup paths."
@@ -43,6 +60,24 @@
       (prog/done))
     (clog/info (format "Found %s paths" (count paths)))
     paths))
+
+(defn- combine-paths-rollups
+  "Combine paths and rollups."
+  [paths rollups]
+  (for [p paths r rollups] [p r]))
+
+(defn- get-thread-pool
+  "Create a threadpool."
+  [options]
+  (cp/threadpool (:jobs options default-jobs)))
+
+(defn- get-paths-from-paths-rollups
+  "Get paths from a paths-rollups list."
+  [paths-rollups]
+  (->> paths-rollups
+       (map first)
+       (distinct)
+       (sort)))
 
 (defn- dry-mode-warn
   "Warn about dry mode."
@@ -73,41 +108,60 @@
     (newline)
     (println duration-str)))
 
+(defmacro with-duration
+  "Show duration macro."
+  [& body]
+  `(let [start-time# (time/now)]
+     ~@body
+     (show-duration (time/interval start-time# (time/now)))))
+
 (defn- show-stats
   "Show stats."
-  [processed errors interval]
+  [processed errors]
   (log/info (format "Stats: processed %s, errors: %s" processed errors))
   (newline)
   (println "Stats:")
   (println "  Processed: " processed)
-  (println "  Errors:    " errors)
-  (show-duration interval))
+  (println "  Errors:    " errors))
+
+(defmacro generate-futures
+  "Generate futures."
+  [pool body coll]
+  `(doall (map #(cp/future ~pool ~body) ~coll)))
+
+(defn- process-futures
+  "Process futures."
+  [futures]
+  (map #(let [result (deref %)]
+          (when-not @clog/print-log?
+            (prog/tick))
+          result)
+       futures))
 
 (defn- process-metric
   "Process a metric."
-  [process-fn mstore options tenant from to rollup-def path]
+  [processor mstore options tenant from to rollup-def path]
   (try
     (let [rollup (first rollup-def)
           period (last rollup-def)]
-      (process-fn mstore options tenant rollup period path from to))
+      (mp-process processor rollup period path from to))
     (catch Exception e
       (clog/error (str "Metric processing error: " e ", "
                        "path: " path) e))))
 
 (defn- process-metrics
   "Process metrics."
-  [tenant rollups paths cass-hosts es-url options process-fn title show-stats?]
-  (let [start-time (time/now)
+  [tenant rollups paths cass-hosts pstore options processor-fn & [tpool]]
+  (let [tpool (if tpool tpool (get-thread-pool options))
         mstore (mstore/cassandra-metric-store cass-hosts options)
-        pstore (pstore/elasticsearch-path-store es-url options)]
+        processor (processor-fn mstore pstore tpool tenant rollups paths options)
+        paths-rollups (mp-get-paths-rollups processor)]
     (try
-      (let [all-paths (get-paths pstore tenant paths)
-            from (:from options)
+      (let [from (:from options)
             to (:to options)
-            jobs (:jobs options default-jobs)
-            tpool (cp/threadpool jobs)
-            proc-fn (partial process-metric process-fn mstore options tenant
-                             from to)]
+            proc-fn (partial process-metric processor mstore options tenant
+                             from to)
+            title (mp-get-title processor)]
         (prog/set-progress-bar!
          "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
         (prog/config-progress-bar! :width pbar-width)
@@ -115,81 +169,102 @@
         (clog/info (str title ":"))
         (when-not @clog/print-log?
           (println title)
-          (prog/init (* (count all-paths) (count rollups))))
-        (let [paths-rollups (for [p all-paths r rollups] [p r])
-              futures (doall (map #(cp/future tpool
-                                              (proc-fn (second %) (first %)))
+          (prog/init (count paths-rollups)))
+        (let [futures (doall (map #(cp/future tpool (proc-fn (second %)
+                                                             (first %)))
                                   paths-rollups))]
-          (dorun (map #(do (deref %) (when-not @clog/print-log? (prog/tick)))
-                      futures)))
+          (dorun (process-futures futures)))
         (when-not @clog/print-log?
           (prog/done)))
       (finally
         (mstore/shutdown mstore)
-        (when show-stats?
-          (let [mstore-stats (mstore/get-stats mstore)
-                pstore-stats (pstore/get-stats pstore)]
-            (show-stats @stats-processed
-                        (+ (:errors mstore-stats)
-                           (:errors pstore-stats))
-                        (time/interval start-time (time/now)))))))))
+        (mp-show-stats processor (+ (:errors (mstore/get-stats mstore))
+                                    (:errors (pstore/get-stats pstore))))))
+    paths-rollups))
 
 (defn- get-times
   "Get a list of times."
   [mstore options tenant rollup period path from to]
   (if (or from to)
-    (let [result (mstore/fetch mstore tenant rollup period path from to)]
+    (let [result (mstore/fetch mstore tenant rollup period path from to nil)]
       (if (= result :mstore-error) [] (map #(:time %) result)))
     nil))
 
-(defn- remove-metrics-path
-  "List metrics for a path."
-  [mstore options tenant rollup period path from to]
-  (swap! stats-processed inc)
-  (let [times (get-times mstore options tenant rollup period path from to)]
-    (clog/info (str "Removing metrics: "
-                    "rollup: " rollup ", "
-                    "period: " period ", "
-                    "path: " path))
-    (if times
-      (when (seq times)
-        (mstore/delete-times mstore tenant rollup period path times))
-      (mstore/delete mstore tenant rollup period path))))
+(defn- remove-metrics-processor
+  "Metrics removal processor."
+  [mstore pstore tpool tenant rollups paths options]
+  (let [stats-processed (atom 0)]
+    (reify
+      MetricProcessor
+      (mp-get-title [this]
+        "Removing metrics")
+      (mp-get-paths [this]
+        (get-paths pstore tenant paths))
+      (mp-get-paths-rollups [this]
+        (combine-paths-rollups (mp-get-paths this) rollups))
+      (mp-process [this rollup period path from to]
+        (swap! stats-processed inc)
+        (let [times (get-times mstore options tenant rollup period path from to)]
+          (clog/info (str "Removing metrics: "
+                          "rollup: " rollup ", "
+                          "period: " period ", "
+                          "path: " path))
+          (if times
+            (when (seq times)
+              (mstore/delete-times mstore tenant rollup period path times))
+            (mstore/delete mstore tenant rollup period path))))
+      (mp-show-stats [this errors]
+        (show-stats @stats-processed errors)))))
 
 (defn remove-metrics
   "Remove metrics."
   [tenant rollups paths cass-hosts es-url options]
   (try
-    (clog/set-logging! options)
-    (log/info starting-str)
-    (dry-mode-warn options)
-    (process-metrics tenant rollups paths cass-hosts es-url options
-                     remove-metrics-path "Removing metrics" true)
+    (with-duration
+      (clog/set-logging! options)
+      (log/info starting-str)
+      (dry-mode-warn options)
+      (process-metrics tenant rollups paths cass-hosts
+                       (pstore/elasticsearch-path-store es-url options) options
+                       remove-metrics-processor))
     (catch Exception e
       (clog/unhandled-error e))))
 
-(defn- list-metrics-path
-  "List metrics for a path."
-  [mstore options tenant rollup period path from to]
-  (let [result (mstore/fetch mstore tenant rollup period path from to)]
-    (dorun (map #(println (format list-metrics-str path rollup period (:time %)
-                                  (:data %))) result))))
+(defn- list-metrics-processor
+  "Metrics listing processor."
+  [mstore pstore tpool tenant rollups paths options]
+  (reify
+    MetricProcessor
+    (mp-get-title [this]
+      "Metrics")
+    (mp-get-paths [this]
+      (get-paths pstore tenant paths))
+    (mp-get-paths-rollups [this]
+      (combine-paths-rollups (mp-get-paths this) rollups))
+    (mp-process [this rollup period path from to]
+      (let [result (mstore/fetch mstore tenant rollup period path from to nil)]
+        (dorun (map #(println (format list-metrics-str path rollup period
+                                      (:time %) (:data %))) result))))
+    (mp-show-stats [this errors])))
 
 (defn list-metrics
   "List metrics."
   [tenant rollups paths cass-hosts es-url options]
   (try
     (clog/disable-logging!)
-    (process-metrics tenant rollups paths cass-hosts es-url options
-                     list-metrics-path "Metrics" false)
+    (process-metrics tenant rollups paths cass-hosts
+                     (pstore/elasticsearch-path-store es-url options) options
+                     list-metrics-processor)
     (catch Exception e
       (clog/unhandled-error e))))
 
 (defn- process-paths
   "Process paths."
-  [tenant paths es-url options process-fn title show-stats?]
+  [tenant paths pstore options processor-fn & [tpool]]
   (let [start-time (time/now)
-        pstore (pstore/elasticsearch-path-store es-url options)]
+        tpool (if tpool tpool (get-thread-pool options))
+        processor (processor-fn pstore tenant options)
+        title (pp-get-title processor)]
     (try
       (prog/set-progress-bar!
        "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
@@ -199,44 +274,188 @@
       (when-not @clog/print-log?
         (println title)
         (prog/init (count paths)))
-      (dorun (map #(do
-                     (swap! stats-processed inc)
-                     (when-not @clog/print-log?
-                       (prog/tick))
-                     (process-fn pstore options tenant %))
-                  paths))
+      (let [futures (doall (map #(cp/future tpool (pp-process processor %))
+                                paths))]
+        (dorun (process-futures futures)))
       (when-not @clog/print-log?
         (prog/done))
       (finally
-        (when show-stats?
-          (let [pstore-stats (pstore/get-stats pstore)]
-            (show-stats (:processed pstore-stats) (:errors pstore-stats)
-                        (time/interval start-time (time/now)))))))))
+        (pp-show-stats processor (:errors (pstore/get-stats pstore)))))))
+
+(defn- remove-paths-processor
+  "Path removal processor."
+  [pstore tenant options]
+  (let [stats-processed (atom 0)]
+    (reify
+      PathProcessor
+      (pp-get-title [this]
+        "Removing paths")
+      (pp-process [this path]
+        (swap! stats-processed inc)
+        (clog/info (str "Removing path: " path))
+        (pstore/delete pstore tenant false false path))
+      (pp-show-stats [this errors]
+        (show-stats @stats-processed errors)))))
 
 (defn remove-paths
   "Remove paths."
   [tenant paths es-url options]
   (try
-    (clog/set-logging! options)
-    (log/info starting-str)
-    (dry-mode-warn options)
-    (process-paths tenant paths es-url options
-                   (fn [pstore options tenant path]
-                     (clog/info (str "Removing path: " path))
-                     (pstore/delete pstore tenant false false path))
-                   "Removing paths" true)
+    (with-duration
+      (clog/set-logging! options)
+      (log/info starting-str)
+      (dry-mode-warn options)
+      (process-paths tenant paths
+                     (pstore/elasticsearch-path-store es-url options)
+                     options remove-paths-processor))
     (catch Exception e
       (clog/unhandled-error e))))
+
+(defn- list-paths-processor
+  "Paths listing processor."
+  [pstore tenant options]
+  (reify
+    PathProcessor
+    (pp-get-title [this]
+      "Paths")
+    (pp-process [this path]
+      (dorun (map println (lookup-paths pstore tenant false false [path]))))
+    (pp-show-stats [this errors])))
 
 (defn list-paths
   "List paths."
   [tenant paths es-url options]
   (try
     (clog/disable-logging!)
-    (process-paths tenant paths es-url options
-                   (fn [pstore options tenant path]
-                     (dorun (map println (lookup-paths pstore tenant false
-                                                       false [path]))))
-                   "Paths" false)
+    (process-paths tenant paths (pstore/elasticsearch-path-store es-url options)
+                   options list-paths-processor)
+    (catch Exception e
+      (clog/unhandled-error e))))
+
+(defn- check-metric-obsolete
+  [mstore tenant from path rollup-def]
+  (let [rollup (first rollup-def)
+        period (last rollup-def)]
+    (clog/info (str "Checking metrics: "
+                    "path: " path ", "
+                    "rollup: " rollup ", "
+                    "period: " period))
+    (let [data (mstore/fetch mstore tenant rollup period path from nil 1)
+          obsolete? (not (seq data))]
+      (if obsolete?
+        (do
+          (log/debug (str "Metrics on path '" path "' are obsolete"))
+          [path rollup-def])
+        nil))))
+
+(defn- filter-obsolete-metrics
+  "Filter obsolete metrics."
+  [mstore tpool tenant rollups options paths]
+  (let [threshold (:threshold options default-obsolete-metrics-threshold)
+        from (timec/to-epoch (time/minus (time/now) (time/seconds threshold)))
+        title "Checking metrics"
+        paths-rollups (combine-paths-rollups paths [(first rollups)])]
+    (prog/set-progress-bar!
+     "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
+    (prog/config-progress-bar! :width pbar-width)
+    (newline)
+    (clog/info (str title ":"))
+    (clog/info (str "Threshold: " threshold ", "
+                    "from: " from " ("
+                    (timef/unparse (:rfc822 timef/formatters)
+                                   (timec/from-long (* from 1000))) ")"))
+    (when-not @clog/print-log?
+      (println title)
+      (prog/init (count paths-rollups)))
+    (let [futures (doall
+                   (map #(cp/future tpool (check-metric-obsolete mstore tenant
+                                                                 from
+                                                                 (first %)
+                                                                 (second %)))
+                        paths-rollups))
+          obsolete-paths (->> futures
+                              (process-futures)
+                              (remove nil?)
+                              (get-paths-from-paths-rollups))
+          _ (clog/info (str "Found obsolete metrics on "
+                            (count obsolete-paths) " paths"))
+          obsolete (combine-paths-rollups obsolete-paths rollups)]
+      (when-not @clog/print-log?
+        (prog/done))
+      obsolete)))
+
+(defn- remove-obsolete-metrics-processor
+  "Obsolete metrics removal processor."
+  [mstore pstore tpool tenant rollups paths options]
+  (let [stats-processed (atom 0)]
+    (reify
+      MetricProcessor
+      (mp-get-title [this]
+        "Removing obsolete metrics")
+      (mp-get-paths [this]
+        (get-paths pstore tenant paths))
+      (mp-get-paths-rollups [this]
+        (filter-obsolete-metrics mstore tpool tenant rollups options
+                                 (mp-get-paths this)))
+      (mp-process [this rollup period path from to]
+        (swap! stats-processed inc)
+        (clog/info (str "Removing obsolete metrics: "
+                        "rollup: " rollup ", "
+                        "period: " period ", "
+                        "path: " path))
+        (mstore/delete mstore tenant rollup period path))
+      (mp-show-stats [this errors]
+        (show-stats @stats-processed errors)))))
+
+(defn- remove-obsolete-paths-processor
+  "Obsolete path removal processor."
+  [pstore tenant options]
+  (let [stats-processed (atom 0)]
+    (reify
+      PathProcessor
+      (pp-get-title [this]
+        "Removing obsolete paths")
+      (pp-process [this path]
+        (swap! stats-processed inc)
+        (clog/info (str "Removing obsolete path: " path))
+        (pstore/delete pstore tenant false false path))
+      (pp-show-stats [this errors]
+        (show-stats @stats-processed errors)))))
+
+(defn remove-obsolete-data
+  "Remove obsolete data."
+  [tenant rollups paths cass-hosts es-url options]
+  (try
+    (with-duration
+      (clog/set-logging! options)
+      (log/info starting-str)
+      (dry-mode-warn options)
+      (let [tpool (get-thread-pool options)
+            pstore (pstore/elasticsearch-path-store es-url options)
+            processed-data (process-metrics tenant rollups paths cass-hosts
+                                            pstore options
+                                            remove-obsolete-metrics-processor
+                                            tpool)
+            obsolete-paths (get-paths-from-paths-rollups processed-data)]
+        (process-paths tenant obsolete-paths pstore options
+                       remove-obsolete-paths-processor)))
+    (catch Exception e
+      (clog/unhandled-error e))))
+
+(defn list-obsolete-data
+  "List obsolete data."
+  [tenant rollups paths cass-hosts es-url options]
+  (try
+    (clog/disable-logging!)
+    (let [tpool (get-thread-pool options)
+          mstore (mstore/cassandra-metric-store cass-hosts options)
+          pstore (pstore/elasticsearch-path-store es-url options)
+          obsolete-data (->> paths
+                             (get-paths pstore tenant)
+                             (filter-obsolete-metrics mstore tpool tenant
+                                                      rollups options)
+                             (get-paths-from-paths-rollups))]
+      (newline)
+      (dorun (map println obsolete-data)))
     (catch Exception e
       (clog/unhandled-error e))))

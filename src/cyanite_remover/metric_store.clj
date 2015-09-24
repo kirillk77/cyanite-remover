@@ -5,13 +5,14 @@
             [clojure.core.async :as async]
             [throttler.core :as trtl]
             [clojure.tools.logging :as log]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [clojure.math.combinatorics :as mcomb])
   (:import [com.datastax.driver.core
             PreparedStatement
             BatchStatement]))
 
 (defprotocol MetricStore
-  (fetch [this tenant rollup period path from to])
+  (fetch [this tenant rollup period path from to limit])
   (delete [this tenant rollup period path])
   (delete-times [this tenant rollup period path times])
   (get-stats [this])
@@ -32,20 +33,18 @@
 (def ^:const fetch-cql
   (str "SELECT data, time FROM metric WHERE "
        "tenant = ? AND rollup = ? AND period = ? AND path = ? %s "
-       "ORDER BY time"))
+       "ORDER BY time %s"))
 
 (def ^:const delete-cql
   (str "DELETE FROM metric WHERE "
        "tenant = ? AND rollup = ? AND period = ? AND path = ?"))
 
 (def ^:const fetch-cqls
-  (let [comb [[false false]
-              [true false]
-              [false true]
-              [true true]]]
+  (let [comb (mcomb/selections [true false] 3)]
     (->> comb
-         (map #(format fetch-cql (str (if (first %) " AND time >= ?" "")
-                                      (if (last %) " AND time <= ?" ""))))
+         (map #(format fetch-cql (str (if (nth % 0) " AND time >= ?" "")
+                                      (if (nth % 1) " AND time <= ?" ""))
+                       (if (nth % 2) " LIMIT ?" "")))
          (zipmap comb))))
 
 (def ^:const delete-cqls {false delete-cql
@@ -80,13 +79,14 @@
   `(log/trace (format "Bind: CQL: %s, values: %s" ~cql ~values)))
 
 (defmacro log-fetching
-  [title rollup period path & [from to]]
+  [title rollup period path & [from to limit]]
   `(log/debug (str ~title
                    "rollup: " ~rollup ", "
                    "period: " ~period ", "
                    "path: " ~path
                    (string-or-empty ~from ", from: ")
-                   (string-or-empty ~to ", to: "))))
+                   (string-or-empty ~to ", to: ")
+                   (string-or-empty ~limit ", limit: "))))
 
 (defn- prepare-cqls
   "Prepare a family of CQL queries."
@@ -102,8 +102,7 @@
 (defn- build-values
   "Build list of values."
   [tenant rollup period path & args]
-  (into [tenant (int rollup) (int period) path]
-        (map long (remove nil? args))))
+  (into [tenant (int rollup) (int period) path] (remove nil? args)))
 
 (defn- build-batch
   "Build a batch of prepared statements"
@@ -143,6 +142,11 @@
                     (swap! data-processed? (fn [_] true))))))
     ch-in))
 
+(defn- to-type
+  "Convert a value to a value of a type."
+  [type val]
+  (if val (type val) val))
+
 (defn cassandra-metric-store
   "Cassandra metric store."
   [hosts options]
@@ -172,18 +176,20 @@
                    "batch rate: " batch-rate))
     (reify
       MetricStore
-      (fetch [this tenant rollup period path from to]
+      (fetch [this tenant rollup period path from to limit]
         (try
-          (let [statement (get-prepared-cql fetch-pcqls from to)
-                values (build-values tenant rollup period path from to)
+          (let [statement (get-prepared-cql fetch-pcqls from to limit)
+                values (build-values tenant rollup period path
+                                     (to-type long from) (to-type long to)
+                                     (to-type int limit))
                 prepared (:prepared statement)
                 cql (:cql statement)
                 _ (log-binding cql values)
                 query (alia/bind prepared values)]
-            (log-fetching "Fetching metrics: " rollup period path from to)
+            (log-fetching "Fetching metrics: " rollup period path from to limit)
             (let [data (alia/execute session query)]
               (log-fetching (format "Fetched %s metrics: " (count data)) rollup
-                            period path from to)
+                            period path from to limit)
               data))
           (catch Exception e
             (log-error e rollup period path stats-errors)
@@ -202,7 +208,8 @@
                       "number of time points")
         (log-deletion log/trace rollup period path (vec times)
                       "time points")
-        (let [series (map #(build-values tenant rollup period path %) times)
+        (let [series (map #(build-values tenant rollup period path
+                                         (to-type long %)) times)
               batches (partition-all batch-size series)]
           (dorun (map #(async/>!! channel {:values %
                                            :rollup rollup

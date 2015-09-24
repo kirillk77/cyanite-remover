@@ -5,7 +5,7 @@
             :url "https://github.com/cybem/cyanite-remover/blob/master/LICENSE"}
   :maintainer {:email "cybem@cybem.info"}
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/tools.cli "0.3.1"]
+                 [org.clojure/tools.cli "0.3.3"]
                  [org.clojure/tools.logging "0.3.1"]
                  [org.spootnik/logconfig "0.7.3"]
                  [cc.qbits/alia "2.5.3"]
@@ -14,8 +14,9 @@
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [clojurewerkz/elastisch "2.2.0-beta4"]
                  [throttler "1.0.0"]
-                 [com.climate/claypoole "1.0.0"]
-                 [clj-time "0.10.0"]
+                 [com.climate/claypoole "1.1.0"]
+                 [clj-time "0.11.0"]
+                 [org.clojure/math.combinatorics "0.1.1"]
                  [intervox/clj-progress "0.2.1"]]
   :main ^:skip-aot cyanite-remover.cli
   :target-path "target/%s"
