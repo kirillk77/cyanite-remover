@@ -18,7 +18,7 @@
 
 (def ^:const pbar-width 35)
 
-(def stats-processed (atom 0))
+(def inspecting? (atom false))
 
 (def list-metrics-str "Path: %s, rollup: %s, period: %s, time: %s, data: %s")
 (def starting-str "==================== Starting ====================")
@@ -36,6 +36,11 @@
   (pp-get-title [this])
   (pp-process [this path])
   (pp-show-stats [this errors]))
+
+(defn- set-inspecting-on!
+  "Set the inspecting flag on."
+  []
+  (swap! inspecting? (fn [_] true)))
 
 (defn- lookup-paths
   "Lookup paths."
@@ -252,6 +257,7 @@
   [tenant rollups paths cass-hosts es-url options]
   (try
     (clog/disable-logging!)
+    (set-inspecting-on!)
     (process-metrics tenant rollups paths cass-hosts
                      (pstore/elasticsearch-path-store es-url options) options
                      list-metrics-processor)
@@ -327,19 +333,22 @@
   [tenant paths es-url options]
   (try
     (clog/disable-logging!)
+    (set-inspecting-on!)
     (process-paths tenant paths (pstore/elasticsearch-path-store es-url options)
                    options list-paths-processor)
     (catch Exception e
       (clog/unhandled-error e))))
 
 (defn- check-metric-obsolete
+  "Check a metric for obsolescence."
   [mstore tenant from path rollup-def]
   (let [rollup (first rollup-def)
         period (last rollup-def)]
-    (clog/info (str "Checking metrics: "
-                    "path: " path ", "
-                    "rollup: " rollup ", "
-                    "period: " period))
+    (when-not @inspecting?
+      (clog/info (str "Checking metrics: "
+                      "path: " path ", "
+                      "rollup: " rollup ", "
+                      "period: " period)))
     (let [data (mstore/fetch mstore tenant rollup period path from nil 1)
           obsolete? (not (seq data))]
       (if obsolete?
@@ -359,11 +368,12 @@
      "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
     (prog/config-progress-bar! :width pbar-width)
     (newline)
-    (clog/info (str title ":"))
-    (clog/info (str "Threshold: " threshold ", "
-                    "from: " from " ("
-                    (timef/unparse (:rfc822 timef/formatters)
-                                   (timec/from-long (* from 1000))) ")"))
+    (clog/info (str title (if @inspecting? "..." ":")))
+    (when-not @inspecting?
+      (clog/info (str "Threshold: " threshold ", "
+                      "from: " from " ("
+                      (timef/unparse (:rfc822 timef/formatters)
+                                     (timec/from-long (* from 1000))) ")")))
     (when-not @clog/print-log?
       (println title)
       (prog/init (count paths-rollups)))
@@ -447,6 +457,7 @@
   [tenant rollups paths cass-hosts es-url options]
   (try
     (clog/disable-logging!)
+    (set-inspecting-on!)
     (let [tpool (get-thread-pool options)
           mstore (mstore/cassandra-metric-store cass-hosts options)
           pstore (pstore/elasticsearch-path-store es-url options)
