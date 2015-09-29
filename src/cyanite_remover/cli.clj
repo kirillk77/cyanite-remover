@@ -50,7 +50,10 @@
 (defn- exit
   "Print message and exit with status."
   [status msg]
-  (println msg)
+  (if (= status 0)
+    (println msg)
+    (binding [*out* *err*]
+      (println msg)))
   (System/exit status))
 
 (defn- check-arguments
