@@ -89,7 +89,7 @@
 (defmacro error
   "Log error."
   [msg & [throwable]]
-  `(do
+  `(binding [*out* *err*]
      (when (and (not @print-log?) @stop-on-error?)
        (newline))
      (when (or @print-log? @stop-on-error?)
@@ -101,7 +101,7 @@
 (defmacro fatal
   "Log fatal."
   [msg & [throwable]]
-  `(do
+  `(binding [*out* *err*]
      (when-not @print-log?
        (newline))
      (log-print ~msg ~throwable)

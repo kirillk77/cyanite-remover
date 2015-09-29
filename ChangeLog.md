@@ -9,6 +9,7 @@ This is a feature and maintenance release.
 * Enable the `--jobs` option for the `remove-paths` command
 * Reorder priority of search paths of the jar-file
 * Use protocols in core
+* Print errors to stderr instead of stdout
 * tools.cli 0.3.3
 * claypoole 1.1.0
 * clj-time 0.11.0
