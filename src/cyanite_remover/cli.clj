@@ -69,7 +69,8 @@
   "Check options."
   [command valid-options options]
   (doseq [option (keys options)]
-    (when (not (contains? valid-options option))
+    (when (and (not (contains? valid-options option))
+               (not (= option :raw-arguments)))
       (exit 1 (error-msg
                [(format "Option \"--%s\" conflicts with the command \"%s\""
                         (name option) command)])))))
@@ -239,6 +240,8 @@
     (cond
      (or (< (count args) 1) (contains? options :help)) (exit 0 (usage summary))
      errors (exit 1 (error-msg errors)))
-    ;; Run command
-    (run-command arguments options summary)
+    ;; Add raw arguments to options
+    (let [options (assoc options :raw-arguments args)]
+      ;; Run command
+      (run-command arguments options summary))
     (clog/exit 0)))

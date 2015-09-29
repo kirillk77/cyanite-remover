@@ -94,6 +94,12 @@
       (println warn-str)
       (log/warn warn-str))))
 
+(defn- log-cli-cmd
+  "Log a CLI command."
+  [options]
+  (when-let [raw-arguments (:raw-arguments options)]
+    (log/info (str "Command line: "(str/join " " raw-arguments)))))
+
 (defn- show-duration
   "Show duration."
   [interval]
@@ -228,6 +234,7 @@
     (with-duration
       (clog/set-logging! options)
       (log/info starting-str)
+      (log-cli-cmd options)
       (dry-mode-warn options)
       (process-metrics tenant rollups paths cass-hosts
                        (pstore/elasticsearch-path-store es-url options) options
@@ -310,6 +317,7 @@
     (with-duration
       (clog/set-logging! options)
       (log/info starting-str)
+      (log-cli-cmd options)
       (dry-mode-warn options)
       (process-paths tenant paths
                      (pstore/elasticsearch-path-store es-url options)
@@ -439,6 +447,7 @@
     (with-duration
       (clog/set-logging! options)
       (log/info starting-str)
+      (log-cli-cmd options)
       (dry-mode-warn options)
       (let [tpool (get-thread-pool options)
             pstore (pstore/elasticsearch-path-store es-url options)
