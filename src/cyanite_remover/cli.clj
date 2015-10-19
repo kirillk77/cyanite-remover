@@ -166,7 +166,7 @@
   "Run command 'list-obsolete-data'."
   [command arguments options summary]
   (check-arguments "list-obsolete-data" arguments 5 5)
-  (check-options command #{:threshold :exclude-paths :cassandra-keyspace
+  (check-options command #{:threshold :exclude-paths :jobs :cassandra-keyspace
                            :cassandra-options :elasticsearch-index}
                  options)
   (let [{:keys [tenant rollups paths cass-hosts es-url
