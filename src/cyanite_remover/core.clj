@@ -44,14 +44,16 @@
 
 (defn- lookup-paths
   "Lookup paths."
-  [pstore tenant leafs-only limit-depth paths]
-  (let [lookup-fn (partial pstore/lookup pstore tenant leafs-only limit-depth)]
+  [pstore tenant leafs-only limit-depth paths exclude-paths]
+  (let [lookup-fn #(pstore/lookup pstore tenant leafs-only limit-depth %
+                                  exclude-paths)]
     (sort (flatten (map lookup-fn paths)))))
 
 (defn- get-paths
   "Get paths."
-  [pstore tenant paths-to-lookup]
-  (let [paths (lookup-paths pstore tenant false false paths-to-lookup)
+  [pstore tenant paths-to-lookup exclude-paths]
+  (let [paths (lookup-paths pstore tenant false false paths-to-lookup
+                            exclude-paths)
         title "Getting paths"]
     (newline)
     (clog/info (str title "..."))
@@ -210,7 +212,7 @@
       (mp-get-title [this]
         "Removing metrics")
       (mp-get-paths [this]
-        (get-paths pstore tenant paths))
+        (get-paths pstore tenant paths (:exclude-paths options)))
       (mp-get-paths-rollups [this]
         (combine-paths-rollups (mp-get-paths this) rollups))
       (mp-process [this rollup period path from to]
@@ -250,7 +252,7 @@
     (mp-get-title [this]
       "Metrics")
     (mp-get-paths [this]
-      (get-paths pstore tenant paths))
+      (get-paths pstore tenant paths (:exclude-paths options)))
     (mp-get-paths-rollups [this]
       (combine-paths-rollups (mp-get-paths this) rollups))
     (mp-process [this rollup period path from to]
@@ -333,7 +335,8 @@
     (pp-get-title [this]
       "Paths")
     (pp-process [this path]
-      (dorun (map println (lookup-paths pstore tenant false false [path]))))
+      (dorun (map println (lookup-paths pstore tenant false false [path]
+                                        (:exclude-paths options)))))
     (pp-show-stats [this errors])))
 
 (defn list-paths
@@ -411,7 +414,7 @@
       (mp-get-title [this]
         "Removing obsolete metrics")
       (mp-get-paths [this]
-        (get-paths pstore tenant paths))
+        (get-paths pstore tenant paths (:exclude-paths options)))
       (mp-get-paths-rollups [this]
         (filter-obsolete-metrics mstore tpool tenant rollups options
                                  (mp-get-paths this)))
@@ -470,8 +473,8 @@
     (let [tpool (get-thread-pool options)
           mstore (mstore/cassandra-metric-store cass-hosts options)
           pstore (pstore/elasticsearch-path-store es-url options)
-          obsolete-data (->> paths
-                             (get-paths pstore tenant)
+          obsolete-data (->> (get-paths pstore tenant paths
+                                        (:exclude-paths options))
                              (filter-obsolete-metrics mstore tpool tenant
                                                       rollups options)
                              (get-paths-from-paths-rollups))]

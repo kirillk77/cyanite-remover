@@ -8,7 +8,7 @@
 
 (defprotocol PathStore
   "Path store."
-  (lookup [this tenant leafs-only limit-depth path])
+  (lookup [this tenant leafs-only limit-depth path exclude-paths])
   (delete [this tenant leafs-only limit-depth path])
   (get-stats [this]))
 
@@ -43,6 +43,14 @@
                            r1 (apply min [r1i r2i])
                            r2 (apply max [r1i r2i])]
                        (format "(%s)" (str/join "|" (range r1 (inc r2)))))))))
+
+(defn- join-wildcards [paths]
+  (let [wrap-to-brackets #(str "(" % ")")]
+    (->> paths
+         (map wildcards-to-regexp)
+         (map wrap-to-brackets)
+         (str/join "|")
+         wrap-to-brackets)))
 
 (defn- add-depth-filter
   "Add a depth filter."
@@ -129,10 +137,15 @@
                    "index: " index))
     (reify
       PathStore
-      (lookup [this tenant leafs-only limit-depth path]
+      (lookup [this tenant leafs-only limit-depth path exclude-paths]
         (try
-          (map :path (search search-fn scroll-fn tenant leafs-only limit-depth
-                             path))
+          (let [paths (map :path (search search-fn scroll-fn tenant leafs-only
+                                         limit-depth path))]
+            (if-not exclude-paths
+              paths
+              (remove (partial re-matches
+                               (re-pattern (join-wildcards exclude-paths)))
+                               paths)))
           (catch Exception e
             (log-error e path stats-errors))))
       (delete [this tenant leafs-only limit-depth path]

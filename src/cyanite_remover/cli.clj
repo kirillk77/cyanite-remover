@@ -102,11 +102,12 @@
   "Run command 'remove-metrics'."
   [command arguments options summary]
   (check-arguments "remove-metrics" arguments 5 5)
-  (check-options command #{:from :to :run :jobs :cassandra-keyspace
-                           :cassandra-options :cassandra-channel-size
-                           :cassandra-batch-size :cassandra-batch-rate
-                           :elasticsearch-index :log-file :log-level
-                           :disable-log :stop-on-error :disable-progress}
+  (check-options command #{:from :to :run :exclude-paths :jobs
+                           :cassandra-keyspace :cassandra-options
+                           :cassandra-channel-size :cassandra-batch-size
+                           :cassandra-batch-rate :elasticsearch-index :log-file
+                           :log-level :disable-log :stop-on-error
+                           :disable-progress}
                  options)
   (when (and (:jobs options) (not (or (:from options) (:to options))))
     (exit 1 (error-msg
@@ -119,11 +120,12 @@
   "Run command 'remove-obsolete-data'."
   [command arguments options summary]
   (check-arguments "remove-obsolete-data" arguments 5 5)
-  (check-options command #{:threshold :run :jobs :cassandra-keyspace
-                           :cassandra-options :cassandra-channel-size
-                           :cassandra-batch-size :cassandra-batch-rate
-                           :elasticsearch-index :log-file :log-level
-                           :disable-log :stop-on-error :disable-progress}
+  (check-options command #{:threshold :run :exclude-paths :jobs
+                           :cassandra-keyspace :cassandra-options
+                           :cassandra-channel-size :cassandra-batch-size
+                           :cassandra-batch-rate :elasticsearch-index :log-file
+                           :log-level :disable-log :stop-on-error
+                           :disable-progress}
                  options)
   (let [{:keys [tenant rollups paths cass-hosts es-url
                 options]} (prepare-metrics-args arguments options)]
@@ -133,8 +135,8 @@
   "Run command 'remove-paths'."
   [command arguments options summary]
   (check-arguments "remove-paths" arguments 3 3)
-  (check-options command #{:run :jobs :elasticsearch-index :log-file :log-level
-                           :disable-log :disable-progress}
+  (check-options command #{:run :jobs :exclude-paths :elasticsearch-index
+                           :log-file :log-level :disable-log :disable-progress}
                  options)
   (let [{:keys [tenant paths es-url
                 options]} (prepare-paths-args arguments options)]
@@ -144,8 +146,8 @@
   "Run command 'list-metrics'."
   [command arguments options summary]
   (check-arguments "list-metrics" arguments 5 5)
-  (check-options command #{:from :to :cassandra-keyspace :cassandra-options
-                           :elasticsearch-index}
+  (check-options command #{:from :to :exclude-paths :cassandra-keyspace
+                           :cassandra-options :elasticsearch-index}
                  options)
   (let [{:keys [tenant rollups paths cass-hosts es-url
                 options]} (prepare-metrics-args arguments options)]
@@ -155,7 +157,7 @@
   "Run command 'list-paths'."
   [command arguments options summary]
   (check-arguments "list-paths" arguments 3 3)
-  (check-options command #{:elasticsearch-index} options)
+  (check-options command #{:exclude-paths :elasticsearch-index} options)
   (let [{:keys [tenant paths es-url
                 options]} (prepare-paths-args arguments options)]
     (core/list-paths tenant paths es-url options)))
@@ -164,8 +166,8 @@
   "Run command 'list-obsolete-data'."
   [command arguments options summary]
   (check-arguments "list-obsolete-data" arguments 5 5)
-  (check-options command #{:threshold :cassandra-keyspace :cassandra-options
-                           :elasticsearch-index}
+  (check-options command #{:threshold :exclude-paths :cassandra-keyspace
+                           :cassandra-options :elasticsearch-index}
                  options)
   (let [{:keys [tenant rollups paths cass-hosts es-url
                 options]} (prepare-metrics-args arguments options)]
@@ -188,6 +190,9 @@
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 %) "Must be a number > 0"]]
    ["-r" "--run" "Force normal run (dry run using on default)"]
+   ["-e" "--exclude-paths PATHS"
+    "Exclude path. Example: \"requests.apache.*;sum.cpu.?\""
+    :parse-fn #(str/split % #";")]
    [nil "--cassandra-keyspace KEYSPACE"
     (str "Cassandra keyspace. Default: " mstore/default-cassandra-keyspace)]
    ["-j" "--jobs JOBS" "Number of jobs to run simultaneously"
