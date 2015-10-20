@@ -1,5 +1,13 @@
 # cyanite-remover changes
 
+## 0.5.1
+
+This is a minor feature and bugfix release.
+
+* Add the `exclude-paths` option
+* Enable the `--jobs` option for the `list-obsolete-data` command
+* Don't delete non-leaf paths during the removal of obsolete data
+
 ## 0.5.0
 
 This is a feature and maintenance release.
