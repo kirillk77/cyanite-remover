@@ -409,6 +409,7 @@
       obsolete)))
 
 (defn- collect-path-info
+  "Add a path to the paths info database."
   [path]
   (let [path-name (:path path)
         path-info {:leaf (:leaf path)}]
