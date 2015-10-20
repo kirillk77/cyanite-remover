@@ -37,6 +37,8 @@
   (pp-process [this path])
   (pp-show-stats [this errors]))
 
+(def paths-info (atom {}))
+
 (defn- set-inspecting-on!
   "Set the inspecting flag on."
   []
@@ -44,16 +46,17 @@
 
 (defn- lookup-paths
   "Lookup paths."
-  [pstore tenant leafs-only limit-depth paths exclude-paths]
+  [pstore tenant leafs-only limit-depth paths exclude-paths & [sidefx-fn]]
   (let [lookup-fn #(pstore/lookup pstore tenant leafs-only limit-depth %
-                                  exclude-paths)]
-    (sort (flatten (map lookup-fn paths)))))
+                                  exclude-paths)
+        sidefx-wrapper (if sidefx-fn #(do (sidefx-fn %) %) (fn [p] p))]
+    (sort (map :path (map sidefx-wrapper (flatten (map lookup-fn paths)))))))
 
 (defn- get-paths
   "Get paths."
-  [pstore tenant paths-to-lookup exclude-paths]
+  [pstore tenant paths-to-lookup exclude-paths & [sidefx-fn]]
   (let [paths (lookup-paths pstore tenant false false paths-to-lookup
-                            exclude-paths)
+                            exclude-paths sidefx-fn)
         title "Getting paths"]
     (newline)
     (clog/info (str title "..."))
@@ -405,6 +408,12 @@
         (prog/done))
       obsolete)))
 
+(defn- collect-path-info
+  [path]
+  (let [path-name (:path path)
+        path-info {:leaf (:leaf path)}]
+    (swap! paths-info assoc path-name path-info)))
+
 (defn- remove-obsolete-metrics-processor
   "Obsolete metrics removal processor."
   [mstore pstore tpool tenant rollups paths options]
@@ -414,7 +423,8 @@
       (mp-get-title [this]
         "Removing obsolete metrics")
       (mp-get-paths [this]
-        (get-paths pstore tenant paths (:exclude-paths options)))
+        (get-paths pstore tenant paths (:exclude-paths options)
+                   collect-path-info))
       (mp-get-paths-rollups [this]
         (filter-obsolete-metrics mstore tpool tenant rollups options
                                  (mp-get-paths this)))
@@ -458,7 +468,9 @@
                                             pstore options
                                             remove-obsolete-metrics-processor
                                             tpool)
-            obsolete-paths (get-paths-from-paths-rollups processed-data)]
+            obsolete-paths (->> processed-data
+                                (get-paths-from-paths-rollups)
+                                (filter #(:leaf (get @paths-info %))))]
         (process-paths tenant obsolete-paths pstore options
                        remove-obsolete-paths-processor)))
     (catch Exception e

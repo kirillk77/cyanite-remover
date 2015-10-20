@@ -139,13 +139,12 @@
       PathStore
       (lookup [this tenant leafs-only limit-depth path exclude-paths]
         (try
-          (let [paths (map :path (search search-fn scroll-fn tenant leafs-only
-                                         limit-depth path))]
+          (let [paths (search search-fn scroll-fn tenant leafs-only
+                              limit-depth path)
+                re-excludes (re-pattern (join-wildcards exclude-paths))]
             (if-not exclude-paths
               paths
-              (remove (partial re-matches
-                               (re-pattern (join-wildcards exclude-paths)))
-                               paths)))
+              (remove #(re-matches re-excludes (:path %)) paths)))
           (catch Exception e
             (log-error e path stats-errors))))
       (delete [this tenant leafs-only limit-depth path]
