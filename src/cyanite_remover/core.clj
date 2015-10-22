@@ -87,9 +87,7 @@
   "Get paths from a paths-rollups list."
   [paths-rollups]
   (->> paths-rollups
-       (map first)
-       (distinct)
-       (sort)))
+       (map first)))
 
 (defn- dry-mode-warn
   "Warn about dry mode."
@@ -382,7 +380,8 @@
   (let [threshold (:threshold options default-obsolete-metrics-threshold)
         from (timec/to-epoch (time/minus (time/now) (time/seconds threshold)))
         title "Checking metrics"
-        paths-rollups (combine-paths-rollups paths [(first rollups)])]
+        paths-rollups (combine-paths-rollups paths [(first rollups)])
+        sort (if (:sort options) sort #(do %))]
     (prog/set-progress-bar!
      "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
     (prog/config-progress-bar! :width pbar-width)
@@ -405,7 +404,8 @@
           obsolete-paths (->> futures
                               (process-futures)
                               (remove nil?)
-                              (get-paths-from-paths-rollups))
+                              (get-paths-from-paths-rollups)
+                              (sort))
           _ (clog/info (str "Found obsolete metrics on "
                             (count obsolete-paths) " paths"))
           obsolete (combine-paths-rollups obsolete-paths rollups)]
