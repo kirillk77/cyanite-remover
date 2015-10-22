@@ -90,8 +90,9 @@
 
 (defn- get-paths-from-paths-rollups
   "Get paths from a paths-rollups list."
-  [paths-rollups]
+  [rollup paths-rollups]
   (->> paths-rollups
+       (filter #(= (second %) rollup))
        (map first)))
 
 (defn- dry-mode-warn
@@ -385,7 +386,8 @@
   (let [threshold (:threshold options default-obsolete-metrics-threshold)
         from (timec/to-epoch (time/minus (time/now) (time/seconds threshold)))
         title "Checking metrics"
-        paths-rollups (combine-paths-rollups paths [(first rollups)])
+        rollup (first rollups)
+        paths-rollups (combine-paths-rollups paths [rollup])
         sort (get-sort-or-dummy-fn (:sort options))]
     (prog/set-progress-bar!
      "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
@@ -409,7 +411,7 @@
           obsolete-paths (->> futures
                               (process-futures)
                               (remove nil?)
-                              (get-paths-from-paths-rollups)
+                              (get-paths-from-paths-rollups rollup)
                               (sort))
           _ (clog/info (str "Found obsolete metrics on "
                             (count obsolete-paths) " paths"))
@@ -481,9 +483,8 @@
                                             remove-obsolete-metrics-processor
                                             tpool)
             obsolete-paths (->> processed-data
-                                (get-paths-from-paths-rollups)
+                                (get-paths-from-paths-rollups (first rollups))
                                 (filter #(:leaf (get @paths-info %)))
-                                (distinct)
                                 (sort))]
         (process-paths tenant obsolete-paths pstore options
                        remove-obsolete-paths-processor)))
@@ -505,8 +506,7 @@
                                         (:sort options))
                              (filter-obsolete-metrics mstore tpool tenant
                                                       rollups options)
-                             (get-paths-from-paths-rollups)
-                             (distinct)
+                             (get-paths-from-paths-rollups (first rollups))
                              (sort))]
       (newline)
       (dorun (map println obsolete-data)))
