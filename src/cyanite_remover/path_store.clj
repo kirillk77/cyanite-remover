@@ -15,7 +15,7 @@
   (get-stats [this]))
 
 (def ^:const default-es-index "cyanite_paths")
-(def ^:const default-es-scroll-batch-size 100)
+(def ^:const default-es-scroll-batch-size 100000)
 
 (def ^:const es-def-type "path")
 
