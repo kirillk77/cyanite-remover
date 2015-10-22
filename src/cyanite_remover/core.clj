@@ -44,21 +44,25 @@
   []
   (swap! inspecting? (fn [_] true)))
 
+(defn- get-sort-or-not-fn
+  [sort?]
+  (if sort? sort #(do %)))
+
 (defn- lookup-paths
   "Lookup paths."
-  [pstore tenant leafs-only limit-depth paths exclude-paths sort-paths
+  [pstore tenant leafs-only limit-depth paths exclude-paths sort-paths?
    & [sidefx-fn]]
   (let [lookup-fn #(pstore/lookup pstore tenant leafs-only limit-depth %
                                   exclude-paths)
         sidefx-wrapper (if sidefx-fn #(do (sidefx-fn %) %) #(do %))
-        sort (if sort-paths sort #(do %))]
+        sort (get-sort-or-not-fn sort-paths?)]
     (sort (map :path (map sidefx-wrapper (flatten (map lookup-fn paths)))))))
 
 (defn- get-paths
   "Get paths."
-  [pstore tenant paths-to-lookup exclude-paths sort-paths & [sidefx-fn]]
+  [pstore tenant paths-to-lookup exclude-paths sort-paths? & [sidefx-fn]]
   (let [paths (lookup-paths pstore tenant false false paths-to-lookup
-                            exclude-paths sort-paths sidefx-fn)
+                            exclude-paths sort-paths? sidefx-fn)
         title "Getting paths"]
     (newline)
     (clog/info (str title "..."))
@@ -381,7 +385,7 @@
         from (timec/to-epoch (time/minus (time/now) (time/seconds threshold)))
         title "Checking metrics"
         paths-rollups (combine-paths-rollups paths [(first rollups)])
-        sort (if (:sort options) sort #(do %))]
+        sort (get-sort-or-not-fn (:sort options))]
     (prog/set-progress-bar!
      "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
     (prog/config-progress-bar! :width pbar-width)
@@ -470,14 +474,16 @@
       (dry-mode-warn options)
       (let [tpool (get-thread-pool options)
             pstore (pstore/elasticsearch-path-store es-url options)
+            sort (get-sort-or-not-fn (:sort options))
             processed-data (process-metrics tenant rollups paths cass-hosts
                                             pstore options
                                             remove-obsolete-metrics-processor
                                             tpool)
             obsolete-paths (->> processed-data
                                 (get-paths-from-paths-rollups)
+                                (filter #(:leaf (get @paths-info %)))
                                 (distinct)
-                                (filter #(:leaf (get @paths-info %))))]
+                                (sort))]
         (process-paths tenant obsolete-paths pstore options
                        remove-obsolete-paths-processor)))
     (catch Exception e
@@ -492,13 +498,15 @@
     (let [tpool (get-thread-pool options)
           mstore (mstore/cassandra-metric-store cass-hosts options)
           pstore (pstore/elasticsearch-path-store es-url options)
+          sort (get-sort-or-not-fn (:sort options))
           obsolete-data (->> (get-paths pstore tenant paths
                                         (:exclude-paths options)
                                         (:sort options))
                              (filter-obsolete-metrics mstore tpool tenant
                                                       rollups options)
                              (get-paths-from-paths-rollups)
-                             (distinct))]
+                             (distinct)
+                             (sort))]
       (newline)
       (dorun (map println obsolete-data)))
     (catch Exception e
