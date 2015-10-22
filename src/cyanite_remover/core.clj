@@ -476,6 +476,7 @@
                                             tpool)
             obsolete-paths (->> processed-data
                                 (get-paths-from-paths-rollups)
+                                (distinct)
                                 (filter #(:leaf (get @paths-info %))))]
         (process-paths tenant obsolete-paths pstore options
                        remove-obsolete-paths-processor)))
@@ -496,7 +497,8 @@
                                         (:sort options))
                              (filter-obsolete-metrics mstore tpool tenant
                                                       rollups options)
-                             (get-paths-from-paths-rollups))]
+                             (get-paths-from-paths-rollups)
+                             (distinct))]
       (newline)
       (dorun (map println obsolete-data)))
     (catch Exception e
