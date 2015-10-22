@@ -45,6 +45,7 @@
   (swap! inspecting? (fn [_] true)))
 
 (defn- get-sort-or-not-fn
+  "Get sort or dummy function."
   [sort?]
   (if sort? sort #(do %)))
 
