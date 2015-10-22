@@ -4,7 +4,9 @@
             [clojurewerkz.elastisch.rest.document :as esrd]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [cyanite-remover.logging :as clog]))
+            [throttler.core :as trtl]
+            [cyanite-remover.logging :as clog]
+            [cyanite-remover.utils :as utils]))
 
 (defprotocol PathStore
   "Path store."
@@ -13,6 +15,8 @@
   (get-stats [this]))
 
 (def ^:const default-es-index "cyanite_paths")
+(def ^:const default-es-scroll-batch-size 100)
+
 (def ^:const es-def-type "path")
 
 (def ^:const es-type-map
@@ -82,13 +86,16 @@
 
 (defn- search
   "Search for a path."
-  [search-fn scroll-fn tenant leafs-only limit-depth path]
-  (let [query (build-query (build-filter tenant leafs-only limit-depth path))
+  [search-fn scroll-fn tenant leafs-only limit-depth path batch-size batch-rate]
+  (let [throttle (if batch-rate
+                   (trtl/throttle-fn #(do %) batch-rate :second)
+                   #(do %))
+        query (build-query (build-filter tenant leafs-only limit-depth path))
         _ (log/trace (str "ES search query: " query))
-        resp (search-fn :query query :size 100 :search_type "query_then_fetch"
-                       :scroll "1m")]
+        resp (search-fn :query query :size batch-size
+                        :search_type "query_then_fetch" :scroll "1m")]
     (log/trace (str "ES search response: " resp))
-    (map #(:_source %) (scroll-fn resp))))
+    (map #(:_source %) (map throttle (scroll-fn resp)))))
 
 (defn- log-shards-errors
   "Log shards' errors."
@@ -125,6 +132,9 @@
   (log/info "Creating the path store...")
   (let [run (:run options false)
         index (:elasticsearch-index options default-es-index)
+        scroll-batch-size (:elasticsearch-scroll-batch-size
+                           options default-es-scroll-batch-size)
+        scroll-batch-rate (:elasticsearch-scroll-batch-rate options)
         conn (esr/connect url)
         search-fn (partial esrd/search conn index es-def-type)
         scroll-fn (partial esrd/scroll-seq conn)
@@ -133,20 +143,26 @@
         stats-processed (atom 0)
         stats-errors (atom 0)]
     (log/info (str "The path store has been created. "
-                   "URL: " url ", "
-                   "index: " index))
+                   "URL: " url
+                   ", index: " index
+                   ", scroll batch size: " scroll-batch-size
+                   (utils/string-or-empty scroll-batch-rate
+                                          (str ", scroll batch rate: "
+                                               scroll-batch-rate))))
     (reify
       PathStore
       (lookup [this tenant leafs-only limit-depth path exclude-paths]
-        (try
-          (let [paths (search search-fn scroll-fn tenant leafs-only
-                              limit-depth path)
-                re-excludes (re-pattern (join-wildcards exclude-paths))]
-            (if-not exclude-paths
-              paths
-              (remove #(re-matches re-excludes (:path %)) paths)))
-          (catch Exception e
-            (log-error e path stats-errors))))
+        (let []
+          (try
+            (let [paths (search search-fn scroll-fn tenant leafs-only
+                                limit-depth path scroll-batch-size
+                                scroll-batch-rate)
+                  re-excludes (re-pattern (join-wildcards exclude-paths))]
+              (if-not exclude-paths
+                paths
+                (remove #(re-matches re-excludes (:path %)) paths)))
+            (catch Exception e
+              (log-error e path stats-errors)))))
       (delete [this tenant leafs-only limit-depth path]
         (try
           (swap! stats-processed inc)
