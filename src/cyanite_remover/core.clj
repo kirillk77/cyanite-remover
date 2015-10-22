@@ -25,7 +25,7 @@
 
 (defprotocol MetricProcessor
   "Metric processing protocol."
-  (mp-get-title [this])
+ (mp-get-title [this])
   (mp-get-paths [this])
   (mp-get-paths-rollups [this])
   (mp-process [this rollup period path from to])
@@ -36,6 +36,18 @@
   (pp-get-title [this])
   (pp-process [this path])
   (pp-show-stats [this errors]))
+
+(defprotocol Tree
+  "Paths tree protocol."
+  (t-add-path [this path leaf?])
+  (t-get-childs [this & [path]])
+  (t-path-leaf? [this path])
+  (t-path-empty? [this path])
+  (t-delete-path [this path]))
+
+(defprotocol TreeProcessor
+  "Tree processor protocol."
+  (tp-process-path [this tree path]))
 
 (def paths-info (atom {}))
 
@@ -210,8 +222,7 @@
   "Metrics removal processor."
   [mstore pstore tpool tenant rollups paths options]
   (let [stats-processed (atom 0)]
-    (reify
-      MetricProcessor
+    (reify MetricProcessor
       (mp-get-title [this]
         "Removing metrics")
       (mp-get-paths [this]
@@ -250,8 +261,7 @@
 (defn- list-metrics-processor
   "Metrics listing processor."
   [mstore pstore tpool tenant rollups paths options]
-  (reify
-    MetricProcessor
+  (reify MetricProcessor
     (mp-get-title [this]
       "Metrics")
     (mp-get-paths [this]
@@ -304,8 +314,7 @@
   "Path removal processor."
   [pstore tenant options]
   (let [stats-processed (atom 0)]
-    (reify
-      PathProcessor
+    (reify PathProcessor
       (pp-get-title [this]
         "Removing paths")
       (pp-process [this path]
@@ -333,8 +342,7 @@
 (defn- list-paths-processor
   "Paths listing processor."
   [pstore tenant options]
-  (reify
-    PathProcessor
+  (reify PathProcessor
     (pp-get-title [this]
       "Paths")
     (pp-process [this path]
@@ -419,8 +427,7 @@
   "Obsolete metrics removal processor."
   [mstore pstore tpool tenant rollups paths options]
   (let [stats-processed (atom 0)]
-    (reify
-      MetricProcessor
+    (reify MetricProcessor
       (mp-get-title [this]
         "Removing obsolete metrics")
       (mp-get-paths [this]
@@ -443,8 +450,7 @@
   "Obsolete path removal processor."
   [pstore tenant options]
   (let [stats-processed (atom 0)]
-    (reify
-      PathProcessor
+    (reify PathProcessor
       (pp-get-title [this]
         "Removing obsolete paths")
       (pp-process [this path]
@@ -493,5 +499,95 @@
                              (get-paths-from-paths-rollups))]
       (newline)
       (dorun (map println obsolete-data)))
+    (catch Exception e
+      (clog/unhandled-error e))))
+
+(defn- path-str2list
+  "Convert a string path to its list representation."
+  [path]
+  (str/split path #"\."))
+
+(defn- add-path-to-tree
+  "Add a path to the paths tree."
+  [tree path]
+  (let [lpath (path-str2list (:path path))
+        leaf? (:leaf path)]
+    (t-add-path tree lpath leaf?)))
+
+;; https://stackoverflow.com/questions/14488150/how-to-write-a-dissoc-in-command-for-clojure
+(defn- dissoc-in
+  "Dissociates an entry from a nested associative structure returning a new
+  nested structure. keys is a sequence of keys. Any empty maps that result
+  WILL BE present in the new structure."
+  [m [k & ks :as keys]]
+  (if ks
+    (if-let [nextmap (get m k)]
+      (let [newmap (dissoc-in nextmap ks)]
+        (assoc m k newmap))
+      m)
+    (dissoc m k)))
+
+(defn- hm-tree
+  "Hash-map tree implementation."
+  []
+  (let [tree (atom {})]
+    (reify Tree
+      (t-add-path [this path leaf?]
+        (let [val (if leaf? nil {})]
+          (swap! tree assoc-in path val)))
+      (t-get-childs [this & [path]]
+        (if (empty? path)
+          (keys @tree)
+          (let [path (vec path)]
+            (map #(conj path %) (keys (get-in @tree path))))))
+      (t-path-leaf? [this path]
+        (= (get-in @tree path) nil))
+      (t-path-empty? [this path]
+        (= (get-in @tree path) {}))
+      (t-delete-path [this path]
+        (swap! tree dissoc-in path)))))
+
+(defn- empty-paths-remover
+  "Empty paths remover."
+  []
+  (reify TreeProcessor
+    (tp-process-path [this tree path]
+      (if (t-path-empty? tree path)
+        (do
+          (t-delete-path tree path)
+          true)
+        false))))
+
+(defn- tree-walker
+  "Tree walker."
+  [tenant paths pstore options tree-fn & [tpool]]
+  (let [tpool (if tpool tpool (get-thread-pool options))
+        processor (tree-fn)
+        title (pp-get-title processor)]
+    (try
+      (prog/set-progress-bar!
+       "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
+      (prog/config-progress-bar! :width pbar-width)
+      (newline)
+      (clog/info (str title ":"))
+      (when-not @clog/print-log?
+        (println title)
+        (prog/init (count paths)))
+      (let [futures (doall (map #(cp/future tpool (pp-process processor %))
+                                paths))]
+        (dorun (process-futures futures)))
+      (when-not @clog/print-log?
+        (prog/done))
+      (finally
+        (pp-show-stats processor (:errors (pstore/get-stats pstore)))))))
+
+(defn list-empty-paths
+  "List empty paths."
+  [tenant paths es-url options]
+  (try
+    (clog/disable-logging!)
+    (set-inspecting-on!)
+    (let [tpool (get-thread-pool options)
+          pstore (pstore/elasticsearch-path-store es-url options)])
     (catch Exception e
       (clog/unhandled-error e))))

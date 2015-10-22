@@ -9,7 +9,8 @@
   (:gen-class))
 
 (def cli-commands #{"remove-metrics" "remove-paths" "remove-obsolete-data"
-                    "list-metrics" "list-paths" "list-obsolete-data" "help"})
+                    "remove-empty-paths" "list-metrics" "list-paths"
+                    "list-obsolete-data" "list-empty-paths" "help"})
 
 (defn- parse-rollups
   "Parse rollups."
@@ -32,9 +33,11 @@
         "  cyanite-remover [options] remove-metrics <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
         "  cyanite-remover [options] remove-paths <tenant> <path,...> <elasticsearch_url>"
         "  cyanite-remover [options] remove-obsolete-data <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
+        "  cyanite-remover [options] remove-empty-paths <tenant> <path,...> <elasticsearch_url>"
         "  cyanite-remover [options] list-metrics <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
         "  cyanite-remover [options] list-paths <tenant> <path,...> <elasticsearch_url>"
         "  cyanite-remover [options] list-obsolete-data <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
+        "  cyanite-remover [options] list-empty-paths <tenant> <path,...> <elasticsearch_url>"
         "  cyanite-remover help"
         ""
         "Options:"
@@ -172,6 +175,15 @@
   (let [{:keys [tenant rollups paths cass-hosts es-url
                 options]} (prepare-metrics-args arguments options)]
     (core/list-obsolete-data tenant rollups paths cass-hosts es-url options)))
+
+(defn- run-list-empty-paths
+  "Run command 'list-empty-paths'."
+  [command arguments options summary]
+  (check-arguments "list-paths" arguments 3 3)
+  (check-options command #{:exclude-paths :jobs :elasticsearch-index} options)
+  (let [{:keys [tenant paths es-url
+                options]} (prepare-paths-args arguments options)]
+    (core/list-empty-paths tenant paths es-url options)))
 
 (defn- run-help
   "Run command 'help'."
