@@ -44,7 +44,7 @@
   []
   (swap! inspecting? (fn [_] true)))
 
-(defn- get-sort-or-not-fn
+(defn- get-sort-or-dummy-fn
   "Get sort or dummy function."
   [sort?]
   (if sort? sort #(do %)))
@@ -56,7 +56,7 @@
   (let [lookup-fn #(pstore/lookup pstore tenant leafs-only limit-depth %
                                   exclude-paths)
         sidefx-wrapper (if sidefx-fn #(do (sidefx-fn %) %) #(do %))
-        sort (get-sort-or-not-fn sort-paths?)]
+        sort (get-sort-or-dummy-fn sort-paths?)]
     (sort (map :path (map sidefx-wrapper (flatten (map lookup-fn paths)))))))
 
 (defn- get-paths
@@ -386,7 +386,7 @@
         from (timec/to-epoch (time/minus (time/now) (time/seconds threshold)))
         title "Checking metrics"
         paths-rollups (combine-paths-rollups paths [(first rollups)])
-        sort (get-sort-or-not-fn (:sort options))]
+        sort (get-sort-or-dummy-fn (:sort options))]
     (prog/set-progress-bar!
      "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
     (prog/config-progress-bar! :width pbar-width)
@@ -475,7 +475,7 @@
       (dry-mode-warn options)
       (let [tpool (get-thread-pool options)
             pstore (pstore/elasticsearch-path-store es-url options)
-            sort (get-sort-or-not-fn (:sort options))
+            sort (get-sort-or-dummy-fn (:sort options))
             processed-data (process-metrics tenant rollups paths cass-hosts
                                             pstore options
                                             remove-obsolete-metrics-processor
@@ -499,7 +499,7 @@
     (let [tpool (get-thread-pool options)
           mstore (mstore/cassandra-metric-store cass-hosts options)
           pstore (pstore/elasticsearch-path-store es-url options)
-          sort (get-sort-or-not-fn (:sort options))
+          sort (get-sort-or-dummy-fn (:sort options))
           obsolete-data (->> (get-paths pstore tenant paths
                                         (:exclude-paths options)
                                         (:sort options))
