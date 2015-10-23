@@ -149,7 +149,7 @@
         scroll-batch-size (:elasticsearch-scroll-batch-size
                            options default-es-scroll-batch-size)
         scroll-batch-rate (:elasticsearch-scroll-batch-rate options)
-        delete-query-rate (:elasticsearch-delete-query-rate options)
+        delete-request-rate (:elasticsearch-delete-request-rate options)
         conn (esr/connect url)
         search-fn (partial esrd/search conn index es-def-type)
         scroll-fn (partial esrd/scroll-seq conn)
@@ -158,8 +158,8 @@
         stats-errors (atom 0)
         deleteq-impl (partial deleteq-impl conn index es-def-type run
                              stats-processed stats-errors)
-        deleteq-fn (if delete-query-rate
-                    (trtl/throttle-fn deleteq-impl delete-query-rate :second)
+        deleteq-fn (if delete-request-rate
+                    (trtl/throttle-fn deleteq-impl delete-request-rate :second)
                     deleteq-impl)]
     (log/info (str "The path store has been created. "
                    "URL: " url
@@ -168,9 +168,9 @@
                    (utils/string-or-empty scroll-batch-rate
                                           (str ", scroll batch rate: "
                                                scroll-batch-rate))
-                   (utils/string-or-empty delete-query-rate
-                                          (str ", delete query rate: "
-                                               delete-query-rate))))
+                   (utils/string-or-empty delete-request-rate
+                                          (str ", delete request rate: "
+                                               delete-request-rate))))
     (reify
       PathStore
       (lookup [this tenant leafs-only limit-depth path exclude-paths]

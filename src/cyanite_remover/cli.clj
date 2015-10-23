@@ -128,7 +128,7 @@
                            :cassandra-batch-rate :elasticsearch-index
                            :elasticsearch-scroll-batch-size
                            :elasticsearch-scroll-batch-rate
-                           :elasticsearch-delete-query-rate
+                           :elasticsearch-delete-request-rate
                            :log-file :log-level :disable-log :stop-on-error
                            :disable-progress}
                  options)
@@ -143,7 +143,7 @@
   (check-options command #{:run :exclude-paths :sort :jobs :elasticsearch-index
                            :elasticsearch-scroll-batch-size
                            :elasticsearch-scroll-batch-rate
-                           :elasticsearch-delete-query-rate :log-file
+                           :elasticsearch-delete-request-rate :log-file
                            :log-level :disable-log :disable-progress}
                  options)
   (let [{:keys [tenant paths es-url
@@ -239,8 +239,8 @@
     "Elasticsearch scroll batch rate (batches per second)"
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 %) "Must be a number > 0"]]
-   [nil "--elasticsearch-delete-query-rate RATE"
-    "Elasticsearch delete query rate (queries per second)"
+   [nil "--elasticsearch-delete-request-rate RATE"
+    "Elasticsearch delete request rate (requests per second)"
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 %) "Must be a number > 0"]]
    ["-l" "--log-file FILE" (str "Log file. Default: " clog/default-log-file)]
