@@ -11,7 +11,7 @@
 (defprotocol PathStore
   "Path store."
   (lookup [this tenant leafs-only limit-depth path exclude-paths])
-  (delete [this tenant leafs-only limit-depth path])
+  (delete-query [this tenant leafs-only limit-depth path])
   (get-stats [this]))
 
 (def ^:const default-es-index "cyanite_paths")
@@ -126,7 +126,7 @@
         true)
       (error-fn "shards"))))
 
-(defn- delete-impl
+(defn- deleteq-impl
   [conn index es-def-type run stats-processed stats-errors tenant leafs-only
    limit-depth path]
   (try
@@ -156,11 +156,11 @@
         data-stored? (atom false)
         stats-processed (atom 0)
         stats-errors (atom 0)
-        delete-impl (partial delete-impl conn index es-def-type run
+        deleteq-impl (partial deleteq-impl conn index es-def-type run
                              stats-processed stats-errors)
-        delete-fn (if delete-query-rate
-                    (trtl/throttle-fn delete-impl delete-query-rate :second)
-                    delete-impl)]
+        deleteq-fn (if delete-query-rate
+                    (trtl/throttle-fn deleteq-impl delete-query-rate :second)
+                    deleteq-impl)]
     (log/info (str "The path store has been created. "
                    "URL: " url
                    ", index: " index
@@ -185,8 +185,8 @@
                 (remove #(re-matches re-excludes (:path %)) paths)))
             (catch Exception e
               (log-error e path stats-errors)))))
-      (delete [this tenant leafs-only limit-depth path]
-        (delete-fn tenant leafs-only limit-depth path))
+      (delete-query [this tenant leafs-only limit-depth path]
+        (deleteq-fn tenant leafs-only limit-depth path))
       (get-stats [this]
         {:processed @stats-processed
          :errors @stats-errors}))))

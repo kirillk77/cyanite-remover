@@ -319,7 +319,7 @@
       (pp-process [this path]
         (swap! stats-processed inc)
         (clog/info (str "Removing path: " path))
-        (pstore/delete pstore tenant false false path))
+        (pstore/delete-query pstore tenant false false path))
       (pp-show-stats [this errors]
         (show-stats @stats-processed errors)))))
 
@@ -462,7 +462,7 @@
       (pp-process [this path]
         (swap! stats-processed inc)
         (clog/info (str "Removing obsolete path: " path))
-        (pstore/delete pstore tenant false false path))
+        (pstore/delete-query pstore tenant false false path))
       (pp-show-stats [this errors]
         (show-stats @stats-processed errors)))))
 
