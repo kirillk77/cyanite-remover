@@ -126,6 +126,20 @@
         true)
       (error-fn "shards"))))
 
+(defn- delete-impl
+  [conn index es-def-type run stats-processed stats-errors tenant leafs-only
+   limit-depth path]
+  (try
+    (swap! stats-processed inc)
+    (let [query (build-query (build-filter tenant leafs-only
+                                           limit-depth path))]
+      (log/trace (str "ES delete query: " query))
+      (when run
+        (let [response (esrd/delete-by-query conn index es-def-type query)]
+          (process-response-delete response index path stats-errors))))
+    (catch Exception e
+      (log-error e path stats-errors))))
+
 (defn elasticsearch-path-store
   "Create an Elasticsearch path store."
   [url options]
@@ -135,20 +149,28 @@
         scroll-batch-size (:elasticsearch-scroll-batch-size
                            options default-es-scroll-batch-size)
         scroll-batch-rate (:elasticsearch-scroll-batch-rate options)
+        delete-query-rate (:elasticsearch-delete-query-rate options)
         conn (esr/connect url)
         search-fn (partial esrd/search conn index es-def-type)
         scroll-fn (partial esrd/scroll-seq conn)
-        delete-fn (partial esrd/delete-by-query conn index es-def-type)
         data-stored? (atom false)
         stats-processed (atom 0)
-        stats-errors (atom 0)]
+        stats-errors (atom 0)
+        delete-impl (partial delete-impl conn index es-def-type run
+                             stats-processed stats-errors)
+        delete-fn (if delete-query-rate
+                    (trtl/throttle-fn delete-impl delete-query-rate :second)
+                    delete-impl)]
     (log/info (str "The path store has been created. "
                    "URL: " url
                    ", index: " index
                    ", scroll batch size: " scroll-batch-size
                    (utils/string-or-empty scroll-batch-rate
                                           (str ", scroll batch rate: "
-                                               scroll-batch-rate))))
+                                               scroll-batch-rate))
+                   (utils/string-or-empty delete-query-rate
+                                          (str ", delete query rate: "
+                                               delete-query-rate))))
     (reify
       PathStore
       (lookup [this tenant leafs-only limit-depth path exclude-paths]
@@ -164,16 +186,7 @@
             (catch Exception e
               (log-error e path stats-errors)))))
       (delete [this tenant leafs-only limit-depth path]
-        (try
-          (swap! stats-processed inc)
-          (let [query (build-query (build-filter tenant leafs-only
-                                                 limit-depth path))]
-            (log/trace (str "ES delete query: " query))
-            (when run
-              (let [response (delete-fn query)]
-                (process-response-delete response index path stats-errors))))
-          (catch Exception e
-            (log-error e path stats-errors))))
+        (delete-fn tenant leafs-only limit-depth path))
       (get-stats [this]
         {:processed @stats-processed
          :errors @stats-errors}))))
