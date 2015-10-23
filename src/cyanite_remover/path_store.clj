@@ -4,13 +4,13 @@
             [clojurewerkz.elastisch.rest.document :as esrd]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [throttler.core :as trtl]
             [cyanite-remover.logging :as clog]
             [cyanite-remover.utils :as utils]))
 
 (defprotocol PathStore
   "Path store."
   (lookup [this tenant leafs-only limit-depth path exclude-paths])
+  (delete [this tenant path])
   (delete-query [this tenant leafs-only limit-depth path])
   (get-stats [this]))
 
@@ -87,15 +87,13 @@
 (defn- search
   "Search for a path."
   [search-fn scroll-fn tenant leafs-only limit-depth path batch-size batch-rate]
-  (let [throttle (if batch-rate
-                   (trtl/throttle-fn #(do %) batch-rate :second)
-                   #(do %))
+  (let [throttle-fn (utils/fn-or-trtlfn #(do %) batch-rate)
         query (build-query (build-filter tenant leafs-only limit-depth path))
         _ (log/trace (str "ES search query: " query))
         resp (search-fn :query query :size batch-size
                         :search_type "query_then_fetch" :scroll "1m")]
     (log/trace (str "ES search response: " resp))
-    (map #(:_source %) (map throttle (scroll-fn resp)))))
+    (map #(:_source %) (map throttle-fn (scroll-fn resp)))))
 
 (defn- log-shards-errors
   "Log shards' errors."
@@ -110,7 +108,7 @@
 (defn- process-response-delete
   "Process response of delete-by-query."
   [response index path stats-errors]
-  (log/trace (str "ES delete response: " response))
+  (log/trace (str "ES delete query response: " response))
   (let [error-fn #(do (log-error (format "Can't get \"%s\" value from response" %)
                                  path stats-errors) false)]
     (if-let [shards (:_shards (get (:_indices response) (keyword index)))]
@@ -126,7 +124,26 @@
         true)
       (error-fn "shards"))))
 
+(defn- get-doc-id
+  "Get a document ID."
+  [tenant path]
+  (str tenant "_" path))
+
+(defn- delete-impl
+  "Delete implementation."
+  [conn index es-def-type run stats-processed stats-errors tenant path]
+  (try
+    (swap! stats-processed inc)
+    (let [id (get-doc-id tenant path)]
+      (log/trace (str "ES delete document ID: " id))
+      (when run
+        (let [response (esrd/delete conn index es-def-type id)]
+          (log/trace (str "ES delete response: " response)))))
+    (catch Exception e
+      (log-error e path stats-errors))))
+
 (defn- deleteq-impl
+  "Delete query implementation."
   [conn index es-def-type run stats-processed stats-errors tenant leafs-only
    limit-depth path]
   (try
@@ -156,11 +173,12 @@
         data-stored? (atom false)
         stats-processed (atom 0)
         stats-errors (atom 0)
-        deleteq-impl (partial deleteq-impl conn index es-def-type run
+        delete-impl (partial delete-impl conn index es-def-type run
                              stats-processed stats-errors)
-        deleteq-fn (if delete-request-rate
-                    (trtl/throttle-fn deleteq-impl delete-request-rate :second)
-                    deleteq-impl)]
+        deleteq-impl (partial deleteq-impl conn index es-def-type run
+                              stats-processed stats-errors)
+        delete-fn (utils/fn-or-trtlfn delete-impl delete-request-rate)
+        deleteq-fn (utils/fn-or-trtlfn deleteq-impl delete-request-rate)]
     (log/info (str "The path store has been created. "
                    "URL: " url
                    ", index: " index
@@ -185,6 +203,8 @@
                 (remove #(re-matches re-excludes (:path %)) paths)))
             (catch Exception e
               (log-error e path stats-errors)))))
+      (delete [this tenant path]
+        (delete-fn tenant path))
       (delete-query [this tenant leafs-only limit-depth path]
         (deleteq-fn tenant leafs-only limit-depth path))
       (get-stats [this]
