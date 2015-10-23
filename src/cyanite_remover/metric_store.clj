@@ -1,5 +1,6 @@
 (ns cyanite-remover.metric-store
   (:require [cyanite-remover.logging :as clog]
+            [cyanite-remover.utils :as utils]
             [qbits.alia :as alia]
             [qbits.alia.policy.load-balancing :as alia_lbp]
             [clojure.core.async :as async]
@@ -50,11 +51,6 @@
 (def ^:const delete-cqls {false delete-cql
                           true (str delete-cql " AND time = ?")})
 
-(defn- string-or-empty
-  "Return a passed string if value is not nil and an empty string otherwise."
-  [value string]
-  (if value (str string value) ""))
-
 (defn- log-error
   "Log a error."
   [error rollup period path stats-errors]
@@ -68,10 +64,10 @@
   "Log a deletion."
   [log-fn rollup period path & [times times-title]]
   `(~log-fn (str "Removing metrics: "
-                 (string-or-empty ~rollup "rollup: ")
-                 (string-or-empty ~period ", period: ")
-                 (string-or-empty ~path ", path: ")
-                 (string-or-empty ~times (str ", " ~times-title ": ")))))
+                 (utils/string-or-empty ~rollup "rollup: ")
+                 (utils/string-or-empty ~period ", period: ")
+                 (utils/string-or-empty ~path ", path: ")
+                 (utils/string-or-empty ~times (str ", " ~times-title ": ")))))
 
 (defmacro log-binding
   "Log a binding."
@@ -84,9 +80,9 @@
                    "rollup: " ~rollup ", "
                    "period: " ~period ", "
                    "path: " ~path
-                   (string-or-empty ~from ", from: ")
-                   (string-or-empty ~to ", to: ")
-                   (string-or-empty ~limit ", limit: "))))
+                   (utils/string-or-empty ~from ", from: ")
+                   (utils/string-or-empty ~to ", to: ")
+                   (utils/string-or-empty ~limit ", limit: "))))
 
 (defn- prepare-cqls
   "Prepare a family of CQL queries."

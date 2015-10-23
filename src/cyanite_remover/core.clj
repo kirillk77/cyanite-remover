@@ -56,19 +56,26 @@
   []
   (swap! inspecting? (fn [_] true)))
 
+(defn- get-sort-or-dummy-fn
+  "Get sort or dummy function."
+  [sort?]
+  (if sort? sort #(do %)))
+
 (defn- lookup-paths
   "Lookup paths."
-  [pstore tenant leafs-only limit-depth paths exclude-paths & [sidefx-fn]]
+  [pstore tenant leafs-only limit-depth paths exclude-paths sort-paths?
+   & [sidefx-fn]]
   (let [lookup-fn #(pstore/lookup pstore tenant leafs-only limit-depth %
                                   exclude-paths)
-        sidefx-wrapper (if sidefx-fn #(do (sidefx-fn %) %) (fn [p] p))]
+        sidefx-wrapper (if sidefx-fn #(do (sidefx-fn %) %) #(do %))
+        sort (get-sort-or-dummy-fn sort-paths?)]
     (sort (map :path (map sidefx-wrapper (flatten (map lookup-fn paths)))))))
 
 (defn- get-paths
   "Get paths."
-  [pstore tenant paths-to-lookup exclude-paths & [sidefx-fn]]
+  [pstore tenant paths-to-lookup exclude-paths sort-paths? & [sidefx-fn]]
   (let [paths (lookup-paths pstore tenant false false paths-to-lookup
-                            exclude-paths sidefx-fn)
+                            exclude-paths sort-paths? sidefx-fn)
         title "Getting paths"]
     (newline)
     (clog/info (str title "..."))
@@ -95,11 +102,10 @@
 
 (defn- get-paths-from-paths-rollups
   "Get paths from a paths-rollups list."
-  [paths-rollups]
+  [rollup paths-rollups]
   (->> paths-rollups
-       (map first)
-       (distinct)
-       (sort)))
+       (filter #(= (second %) rollup))
+       (map first)))
 
 (defn- dry-mode-warn
   "Warn about dry mode."
@@ -226,7 +232,8 @@
       (mp-get-title [this]
         "Removing metrics")
       (mp-get-paths [this]
-        (get-paths pstore tenant paths (:exclude-paths options)))
+        (get-paths pstore tenant paths (:exclude-paths options)
+                   (:sort options)))
       (mp-get-paths-rollups [this]
         (combine-paths-rollups (mp-get-paths this) rollups))
       (mp-process [this rollup period path from to]
@@ -265,7 +272,8 @@
     (mp-get-title [this]
       "Metrics")
     (mp-get-paths [this]
-      (get-paths pstore tenant paths (:exclude-paths options)))
+      (get-paths pstore tenant paths (:exclude-paths options)
+                 (:sort options)))
     (mp-get-paths-rollups [this]
       (combine-paths-rollups (mp-get-paths this) rollups))
     (mp-process [this rollup period path from to]
@@ -320,7 +328,7 @@
       (pp-process [this path]
         (swap! stats-processed inc)
         (clog/info (str "Removing path: " path))
-        (pstore/delete pstore tenant false false path))
+        (pstore/delete-query pstore tenant false false path))
       (pp-show-stats [this errors]
         (show-stats @stats-processed errors)))))
 
@@ -347,7 +355,8 @@
       "Paths")
     (pp-process [this path]
       (dorun (map println (lookup-paths pstore tenant false false [path]
-                                        (:exclude-paths options)))))
+                                        (:exclude-paths options)
+                                        (:sort options)))))
     (pp-show-stats [this errors])))
 
 (defn list-paths
@@ -385,7 +394,9 @@
   (let [threshold (:threshold options default-obsolete-metrics-threshold)
         from (timec/to-epoch (time/minus (time/now) (time/seconds threshold)))
         title "Checking metrics"
-        paths-rollups (combine-paths-rollups paths [(first rollups)])]
+        rollup (first rollups)
+        paths-rollups (combine-paths-rollups paths [rollup])
+        sort (get-sort-or-dummy-fn (:sort options))]
     (prog/set-progress-bar!
      "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
     (prog/config-progress-bar! :width pbar-width)
@@ -408,7 +419,8 @@
           obsolete-paths (->> futures
                               (process-futures)
                               (remove nil?)
-                              (get-paths-from-paths-rollups))
+                              (get-paths-from-paths-rollups rollup)
+                              (sort))
           _ (clog/info (str "Found obsolete metrics on "
                             (count obsolete-paths) " paths"))
           obsolete (combine-paths-rollups obsolete-paths rollups)]
@@ -431,7 +443,7 @@
       (mp-get-title [this]
         "Removing obsolete metrics")
       (mp-get-paths [this]
-        (get-paths pstore tenant paths (:exclude-paths options)
+        (get-paths pstore tenant paths (:exclude-paths options) (:sort options)
                    collect-path-info))
       (mp-get-paths-rollups [this]
         (filter-obsolete-metrics mstore tpool tenant rollups options
@@ -456,7 +468,7 @@
       (pp-process [this path]
         (swap! stats-processed inc)
         (clog/info (str "Removing obsolete path: " path))
-        (pstore/delete pstore tenant false false path))
+        (pstore/delete pstore tenant path))
       (pp-show-stats [this errors]
         (show-stats @stats-processed errors)))))
 
@@ -471,13 +483,15 @@
       (dry-mode-warn options)
       (let [tpool (get-thread-pool options)
             pstore (pstore/elasticsearch-path-store es-url options)
+            sort (get-sort-or-dummy-fn (:sort options))
             processed-data (process-metrics tenant rollups paths cass-hosts
                                             pstore options
                                             remove-obsolete-metrics-processor
                                             tpool)
             obsolete-paths (->> processed-data
-                                (get-paths-from-paths-rollups)
-                                (filter #(:leaf (get @paths-info %))))]
+                                (get-paths-from-paths-rollups (first rollups))
+                                (filter #(:leaf (get @paths-info %)))
+                                (sort))]
         (process-paths tenant obsolete-paths pstore options
                        remove-obsolete-paths-processor)))
     (catch Exception e
@@ -492,11 +506,14 @@
     (let [tpool (get-thread-pool options)
           mstore (mstore/cassandra-metric-store cass-hosts options)
           pstore (pstore/elasticsearch-path-store es-url options)
+          sort (get-sort-or-dummy-fn (:sort options))
           obsolete-data (->> (get-paths pstore tenant paths
-                                        (:exclude-paths options))
+                                        (:exclude-paths options)
+                                        (:sort options))
                              (filter-obsolete-metrics mstore tpool tenant
                                                       rollups options)
-                             (get-paths-from-paths-rollups))]
+                             (get-paths-from-paths-rollups (first rollups))
+                             (sort))]
       (newline)
       (dorun (map println obsolete-data)))
     (catch Exception e
