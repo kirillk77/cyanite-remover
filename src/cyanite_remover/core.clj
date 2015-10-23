@@ -47,6 +47,7 @@
 
 (defprotocol TreeProcessor
   "Tree processor protocol."
+  (tp-get-title [this])
   (tp-process-path [this tree path]))
 
 (def paths-info (atom {}))
@@ -531,19 +532,6 @@
         leaf? (:leaf path)]
     (t-add-path tree lpath leaf?)))
 
-;; https://stackoverflow.com/questions/14488150/how-to-write-a-dissoc-in-command-for-clojure
-(defn- dissoc-in
-  "Dissociates an entry from a nested associative structure returning a new
-  nested structure. keys is a sequence of keys. Any empty maps that result
-  WILL BE present in the new structure."
-  [m [k & ks :as keys]]
-  (if ks
-    (if-let [nextmap (get m k)]
-      (let [newmap (dissoc-in nextmap ks)]
-        (assoc m k newmap))
-      m)
-    (dissoc m k)))
-
 (defn- hm-tree
   "Hash-map tree implementation."
   []
@@ -568,6 +556,8 @@
   "Empty paths remover."
   []
   (reify TreeProcessor
+    (tp-get-title [this]
+      "Removing empty paths")
     (tp-process-path [this tree path]
       (if (t-path-empty? tree path)
         (do
