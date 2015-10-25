@@ -644,13 +644,14 @@
       (log/info starting-str)
       (log-cli-cmd options)
       (dry-mode-warn options)
-      (let [pstore (pstore/elasticsearch-path-store es-url options)
+      (let [tpool (get-thread-pool options)
+            pstore (pstore/elasticsearch-path-store es-url options)
             sort (get-sort-or-dummy-fn (:sort options))
             empty-paths (->> (tree-walker tenant paths pstore options
-                                          empty-paths-remover)
+                                          empty-paths-remover tpool)
                              (sort))]
         (process-paths tenant empty-paths pstore options
-                       remove-empty-paths-processor)))
+                       remove-empty-paths-processor tpool)))
     (catch Exception e
       (clog/unhandled-error e))))
 
