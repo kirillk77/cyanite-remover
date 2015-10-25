@@ -1,2 +1,2 @@
 # Java Virtual Machine options
-# JAVA_OPTS=
+JAVA_OPTS=
