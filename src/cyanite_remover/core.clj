@@ -639,13 +639,18 @@
   "Remove empty paths."
   [tenant paths es-url options]
   (try
-    (let [pstore (pstore/elasticsearch-path-store es-url options)
-          sort (get-sort-or-dummy-fn (:sort options))
-          empty-paths (->> (tree-walker tenant paths pstore options
-                                        empty-paths-remover)
-                           (sort))]
-      (process-paths tenant empty-paths pstore options
-                     remove-empty-paths-processor))
+    (with-duration
+      (clog/set-logging! options)
+      (log/info starting-str)
+      (log-cli-cmd options)
+      (dry-mode-warn options)
+      (let [pstore (pstore/elasticsearch-path-store es-url options)
+            sort (get-sort-or-dummy-fn (:sort options))
+            empty-paths (->> (tree-walker tenant paths pstore options
+                                          empty-paths-remover)
+                             (sort))]
+        (process-paths tenant empty-paths pstore options
+                       remove-empty-paths-processor)))
     (catch Exception e
       (clog/unhandled-error e))))
 
