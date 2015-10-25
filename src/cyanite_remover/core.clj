@@ -581,11 +581,14 @@
         (get-paths pstore tenant paths (:exclude-paths options) false
                    (partial add-path-to-tree tree-impl)))
       (tp-process-path [this path]
+        ;; Leaf?
         (if (t-path-leaf? tree-impl path)
+          ;; Leaf
           (let [leafs (t-get tree-impl path)]
             (swap! processed + leafs)
             (when-not @clog/print-log?
               (prog/tick-by leafs)))
+          ;; Non-leaf
           (let [spath (path-list2str path)]
             (when (seq path)
               (swap! processed inc)
