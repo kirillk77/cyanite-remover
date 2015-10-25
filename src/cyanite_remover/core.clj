@@ -582,10 +582,13 @@
         (if (t-path-leaf? tree-impl path)
           (when-not @clog/print-log?
             (prog/tick-by (t-get tree-impl path)))
-          (do
+          (let [spath (path-list2str path)]
+            (if (seq path)
+              (clog/info (str "Checking path: " spath)))
             (when (t-path-empty? tree-impl path)
+              (log/debug (str "Path '" spath "' is empty"))
               (t-delete-path tree-impl path)
-              (swap! removed-paths conj (path-list2str path)))
+              (swap! removed-paths conj spath))
             (when (and (not @clog/print-log?) (seq path))
               (prog/tick)))))
       (tp-get-data [this]
