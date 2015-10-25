@@ -621,16 +621,43 @@
         (finally
           (tp-show-stats processor))))))
 
+(defn- remove-empty-paths-processor
+  "Empty path removal processor."
+  [pstore tenant options]
+  (let [stats-processed (atom 0)]
+    (reify PathProcessor
+      (pp-get-title [this]
+        "Removing empty paths")
+      (pp-process [this path]
+        (swap! stats-processed inc)
+        (clog/info (str "Removing empty path: " path))
+        (pstore/delete pstore tenant path))
+      (pp-show-stats [this errors]
+        (show-stats @stats-processed errors)))))
+
+(defn remove-empty-paths
+  "Remove empty paths."
+  [tenant paths es-url options]
+  (try
+    (let [pstore (pstore/elasticsearch-path-store es-url options)
+          sort (get-sort-or-dummy-fn (:sort options))
+          empty-paths (->> (tree-walker tenant paths pstore options
+                                        empty-paths-remover)
+                           (sort))]
+      (process-paths tenant empty-paths pstore options
+                     remove-empty-paths-processor))
+    (catch Exception e
+      (clog/unhandled-error e))))
+
 (defn list-empty-paths
   "List empty paths."
   [tenant paths es-url options]
   (try
     (clog/disable-logging!)
     (set-inspecting-on!)
-    (let [tpool (get-thread-pool options)
-          pstore (pstore/elasticsearch-path-store es-url options)
+    (let [pstore (pstore/elasticsearch-path-store es-url options)
           sort (get-sort-or-dummy-fn (:sort options))]
-      (->> (tree-walker tenant paths pstore options empty-paths-remover tpool)
+      (->> (tree-walker tenant paths pstore options empty-paths-remover)
            (sort)
            (map println)
            (dorun)))

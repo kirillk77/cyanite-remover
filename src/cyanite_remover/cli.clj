@@ -121,6 +121,20 @@
                 options]} (prepare-metrics-args arguments options)]
     (core/remove-metrics tenant rollups paths cass-hosts es-url options)))
 
+(defn- run-remove-paths
+  "Run command 'remove-paths'."
+  [command arguments options summary]
+  (check-arguments "remove-paths" arguments 3 3)
+  (check-options command #{:run :exclude-paths :sort :jobs :elasticsearch-index
+                           :elasticsearch-scroll-batch-size
+                           :elasticsearch-scroll-batch-rate
+                           :elasticsearch-delete-request-rate :log-file
+                           :log-level :disable-log :disable-progress}
+                 options)
+  (let [{:keys [tenant paths es-url
+                options]} (prepare-paths-args arguments options)]
+    (core/remove-paths tenant paths es-url options)))
+
 (defn- run-remove-obsolete-data
   "Run command 'remove-obsolete-data'."
   [command arguments options summary]
@@ -139,19 +153,19 @@
                 options]} (prepare-metrics-args arguments options)]
     (core/remove-obsolete-data tenant rollups paths cass-hosts es-url options)))
 
-(defn- run-remove-paths
-  "Run command 'remove-paths'."
+(defn- run-remove-empty-paths
+  "Run command 'remove-empty-paths'."
   [command arguments options summary]
   (check-arguments "remove-paths" arguments 3 3)
-  (check-options command #{:run :exclude-paths :sort :jobs :elasticsearch-index
+  (check-options command #{:run :exclude-paths :jobs :sort :elasticsearch-index
                            :elasticsearch-scroll-batch-size
                            :elasticsearch-scroll-batch-rate
                            :elasticsearch-delete-request-rate :log-file
-                           :log-level :disable-log :disable-progress}
-                 options)
+                           :log-level :disable-log :stop-on-error
+                           :disable-progress} options)
   (let [{:keys [tenant paths es-url
                 options]} (prepare-paths-args arguments options)]
-    (core/remove-paths tenant paths es-url options)))
+    (core/remove-empty-paths tenant paths es-url options)))
 
 (defn- run-list-metrics
   "Run command 'list-metrics'."
