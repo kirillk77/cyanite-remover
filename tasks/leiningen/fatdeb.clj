@@ -79,6 +79,8 @@
     ; Meta
     (.mkdirs (file dir "DEBIAN"))
     (write (file dir "DEBIAN" "control") (control project))
+    (write (file dir "DEBIAN" "conffiles")
+           (join "\n" ["/etc/default/cyanite-remover"]))
     ; Jar
     (.mkdirs (file dir "usr" "lib" name))
     (copy (file (:root project) "target" "uberjar"
@@ -89,6 +91,10 @@
     (copy (file (:root project) name)
           (file dir "usr" "bin" name))
     (.setExecutable (file dir "usr" "bin" name) true false)
+    ; defaults file
+    (.mkdirs (file dir "etc" "default"))
+    (copy (file (:root project) "pkg" "deb" "cyanite-remover.default")
+          (file dir "etc" "default" "cyanite-remover"))
     ;
     dir))
 
