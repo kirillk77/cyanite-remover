@@ -560,7 +560,9 @@
             (let [path (vec path)]
               (map #(conj path %) (keys (get-in @tree path)))))))
       (t-path-leaf? [this path]
-        (not= (type (get-in @tree path)) clojure.lang.PersistentArrayMap))
+        (let [val (get-in @tree path)]
+          (and (not (instance? clojure.lang.PersistentHashMap val))
+               (not (instance? clojure.lang.PersistentArrayMap val)))))
       (t-path-empty? [this path]
         (= (get-in @tree path) {}))
       (t-delete-path [this path]
@@ -624,7 +626,8 @@
     (letfn [(walk [path]
               (when-not (t-path-leaf? tree-impl path)
                 (dorun (map walk (t-get tree-impl path))))
-              (tp-process-path processor path))]
+              (when (seq path)
+                (tp-process-path processor path)))]
       (try
         (prog/set-progress-bar!
          "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
