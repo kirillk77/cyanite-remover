@@ -499,7 +499,7 @@
                                 (filter #(:leaf (get @paths-info %)))
                                 (sort))]
         (process-paths tenant obsolete-paths pstore options
-                       remove-obsolete-paths-processor)))
+                       remove-obsolete-paths-processor tpool)))
     (catch Exception e
       (clog/unhandled-error e))))
 
