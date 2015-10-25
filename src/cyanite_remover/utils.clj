@@ -13,7 +13,7 @@
   (if rate (trtl/throttle-fn f rate :second) f))
 
 ;; https://stackoverflow.com/questions/14488150/how-to-write-a-dissoc-in-command-for-clojure
-(defn- dissoc-in
+(defn dissoc-in
   "Dissociates an entry from a nested associative structure returning a new
   nested structure. keys is a sequence of keys. Any empty maps that result
   WILL BE present in the new structure."

@@ -11,6 +11,7 @@
             [cyanite-remover.logging :as clog]
             [cyanite-remover.metric-store :as mstore]
             [cyanite-remover.path-store :as pstore]
+            [cyanite-remover.utils :as utils]
             [com.climate.claypoole :as cp]))
 
 (def ^:const default-jobs 1)
@@ -25,7 +26,7 @@
 
 (defprotocol MetricProcessor
   "Metric processing protocol."
- (mp-get-title [this])
+  (mp-get-title [this])
   (mp-get-paths [this])
   (mp-get-paths-rollups [this])
   (mp-process [this rollup period path from to])
@@ -40,15 +41,19 @@
 (defprotocol Tree
   "Paths tree protocol."
   (t-add-path [this path leaf?])
-  (t-get-childs [this & [path]])
+  (t-get [this path])
   (t-path-leaf? [this path])
   (t-path-empty? [this path])
-  (t-delete-path [this path]))
+  (t-delete-path [this path])
+  (t-get-raw-tree [this]))
 
 (defprotocol TreeProcessor
   "Tree processor protocol."
   (tp-get-title [this])
-  (tp-process-path [this tree path]))
+  (tp-get-paths [this])
+  (tp-process-path [this path])
+  (tp-get-data [this])
+  (tp-show-stats [this]))
 
 (def paths-info (atom {}))
 
@@ -98,8 +103,8 @@
 
 (defn- get-thread-pool
   "Create a threadpool."
-  [options]
-  (cp/threadpool (:jobs options default-jobs)))
+  [options & [tpool]]
+  (if tpool tpool (cp/threadpool (:jobs options default-jobs))))
 
 (defn- get-paths-from-paths-rollups
   "Get paths from a paths-rollups list."
@@ -187,7 +192,7 @@
 (defn- process-metrics
   "Process metrics."
   [tenant rollups paths cass-hosts pstore options processor-fn & [tpool]]
-  (let [tpool (if tpool tpool (get-thread-pool options))
+  (let [tpool (get-thread-pool options tpool)
         mstore (mstore/cassandra-metric-store cass-hosts options)
         processor (processor-fn mstore pstore tpool tenant rollups paths options)
         paths-rollups (mp-get-paths-rollups processor)]
@@ -299,7 +304,7 @@
   "Process paths."
   [tenant paths pstore options processor-fn & [tpool]]
   (let [start-time (time/now)
-        tpool (if tpool tpool (get-thread-pool options))
+        tpool (get-thread-pool options tpool)
         processor (processor-fn pstore tenant options)
         title (pp-get-title processor)]
     (try
@@ -525,12 +530,17 @@
   [path]
   (str/split path #"\."))
 
+(defn- path-list2str
+  "Convert a list path to its string representation."
+  [path]
+  (str/join "." path))
+
 (defn- add-path-to-tree
   "Add a path to the paths tree."
-  [tree path]
+  [tree-impl path]
   (let [lpath (path-str2list (:path path))
         leaf? (:leaf path)]
-    (t-add-path tree lpath leaf?)))
+    (t-add-path tree-impl lpath leaf?)))
 
 (defn- hm-tree
   "Hash-map tree implementation."
@@ -538,55 +548,78 @@
   (let [tree (atom {})]
     (reify Tree
       (t-add-path [this path leaf?]
-        (let [val (if leaf? nil {})]
-          (swap! tree assoc-in path val)))
-      (t-get-childs [this & [path]]
-        (if (empty? path)
-          (keys @tree)
-          (let [path (vec path)]
-            (map #(conj path %) (keys (get-in @tree path))))))
+        (if leaf?
+          (let [path (conj (vec (butlast path)) :leafs)]
+            (swap! tree #(assoc-in % path (inc (get-in % path 0)))))
+          (swap! tree #(assoc-in % path (get-in % path {})))))
+      (t-get [this path]
+        (if (t-path-leaf? this path)
+          (get-in @tree path)
+          (if (empty? path)
+            (map vector (keys @tree))
+            (let [path (vec path)]
+              (map #(conj path %) (keys (get-in @tree path)))))))
       (t-path-leaf? [this path]
-        (= (get-in @tree path) nil))
+        (not= (type (get-in @tree path)) clojure.lang.PersistentArrayMap))
       (t-path-empty? [this path]
         (= (get-in @tree path) {}))
       (t-delete-path [this path]
-        (swap! tree dissoc-in path)))))
+        (swap! tree utils/dissoc-in path))
+      (t-get-raw-tree [this]
+        @tree))))
 
 (defn- empty-paths-remover
   "Empty paths remover."
-  []
-  (reify TreeProcessor
-    (tp-get-title [this]
-      "Removing empty paths")
-    (tp-process-path [this tree path]
-      (if (t-path-empty? tree path)
-        (do
-          (t-delete-path tree path)
-          true)
-        false))))
+  [tree-impl pstore tpool tenant paths options]
+  (let [removed-paths (atom [])]
+    (reify TreeProcessor
+      (tp-get-title [this]
+        "Searching empty paths")
+      (tp-get-paths [this]
+        (get-paths pstore tenant paths (:exclude-paths options) false
+                   (partial add-path-to-tree tree-impl)))
+      (tp-process-path [this path]
+        (if (t-path-leaf? tree-impl path)
+          (when-not @clog/print-log?
+            (prog/tick-by (t-get tree-impl path)))
+          (do
+            (when (t-path-empty? tree-impl path)
+              (t-delete-path tree-impl path)
+              (swap! removed-paths conj (path-list2str path)))
+            (when (and (not @clog/print-log?) (seq path))
+              (prog/tick)))))
+      (tp-get-data [this]
+        @removed-paths)
+      (tp-show-stats [this]
+        ))))
 
 (defn- tree-walker
   "Tree walker."
-  [tenant paths pstore options tree-fn & [tpool]]
-  (let [tpool (if tpool tpool (get-thread-pool options))
-        processor (tree-fn)
-        title (pp-get-title processor)]
-    (try
-      (prog/set-progress-bar!
-       "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
-      (prog/config-progress-bar! :width pbar-width)
-      (newline)
-      (clog/info (str title ":"))
-      (when-not @clog/print-log?
-        (println title)
-        (prog/init (count paths)))
-      (let [futures (doall (map #(cp/future tpool (pp-process processor %))
-                                paths))]
-        (dorun (process-futures futures)))
-      (when-not @clog/print-log?
-        (prog/done))
-      (finally
-        (pp-show-stats processor (:errors (pstore/get-stats pstore)))))))
+  [tenant paths pstore options tree-processor-fn & [tpool]]
+  (let [tpool (get-thread-pool options tpool)
+        tree-impl (hm-tree)
+        processor (tree-processor-fn tree-impl pstore tpool tenant paths options)
+        title (tp-get-title processor)
+        paths-count (doall (tp-get-paths processor))]
+    (letfn [(walk [path]
+              (when-not (t-path-leaf? tree-impl path)
+                (dorun (map walk (t-get tree-impl path))))
+              (tp-process-path processor path))]
+      (try
+        (prog/set-progress-bar!
+         "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
+        (prog/config-progress-bar! :width pbar-width)
+        (newline)
+        (clog/info (str title ":"))
+        (when-not @clog/print-log?
+          (println title)
+          (prog/init paths-count))
+        (walk [])
+        (when-not @clog/print-log?
+          (prog/done))
+        (tp-get-data processor)
+        (finally
+          (tp-show-stats processor))))))
 
 (defn list-empty-paths
   "List empty paths."
@@ -595,6 +628,11 @@
     (clog/disable-logging!)
     (set-inspecting-on!)
     (let [tpool (get-thread-pool options)
-          pstore (pstore/elasticsearch-path-store es-url options)])
+          pstore (pstore/elasticsearch-path-store es-url options)
+          sort (get-sort-or-dummy-fn (:sort options))]
+      (->> (tree-walker tenant paths pstore options empty-paths-remover tpool)
+           (sort)
+           (map println)
+           (dorun)))
     (catch Exception e
       (clog/unhandled-error e))))

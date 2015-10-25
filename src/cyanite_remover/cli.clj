@@ -183,7 +183,8 @@
   (check-arguments "list-obsolete-data" arguments 5 5)
   (check-options command #{:threshold :exclude-paths :sort :jobs
                            :cassandra-keyspace :cassandra-options
-                           :elasticsearch-index}
+                           :elasticsearch-index :elasticsearch-scroll-batch-size
+                           :elasticsearch-scroll-batch-rate}
                  options)
   (let [{:keys [tenant rollups paths cass-hosts es-url
                 options]} (prepare-metrics-args arguments options)]
@@ -193,7 +194,9 @@
   "Run command 'list-empty-paths'."
   [command arguments options summary]
   (check-arguments "list-paths" arguments 3 3)
-  (check-options command #{:exclude-paths :jobs :elasticsearch-index} options)
+  (check-options command #{:exclude-paths :jobs :sort :elasticsearch-index
+                           :elasticsearch-scroll-batch-size
+                           :elasticsearch-scroll-batch-rate} options)
   (let [{:keys [tenant paths es-url
                 options]} (prepare-paths-args arguments options)]
     (core/list-empty-paths tenant paths es-url options)))
