@@ -4,12 +4,17 @@ set -e
 
 readonly VERSION=0.5.2-SNAPSHOT
 readonly JAR_FILE="cyanite-remover-$VERSION-standalone.jar"
-readonly JAVA_CMD="java -jar"
-
 readonly SCRIPT_DIR=$(dirname $0)
 readonly NEAR_FILE=$SCRIPT_DIR/$JAR_FILE
 readonly UBERJAR_FILE=$SCRIPT_DIR/target/uberjar/$JAR_FILE
 readonly LIB_FILE=/usr/lib/cyanite-remover/cyanite-remover.jar
+readonly FILE_DEFAULT=/etc/default/cyanite-remover
+
+if [ -f $FILE_DEFAULT ]; then
+	. $FILE_DEFAULT
+fi
+
+readonly JAVA_CMD="java -jar $JAVA_OPTS"
 
 if [ -f $NEAR_FILE ]; then
 	$JAVA_CMD $NEAR_FILE "$@"
