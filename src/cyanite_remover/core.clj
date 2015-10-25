@@ -574,7 +574,7 @@
   (let [removed-paths (atom [])]
     (reify TreeProcessor
       (tp-get-title [this]
-        "Searching empty paths")
+        "Checking paths")
       (tp-get-paths [this]
         (get-paths pstore tenant paths (:exclude-paths options) false
                    (partial add-path-to-tree tree-impl)))
@@ -610,14 +610,16 @@
          "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
         (prog/config-progress-bar! :width pbar-width)
         (newline)
-        (clog/info (str title ":"))
+        (clog/info (str title (if @inspecting? "..." ":")))
         (when-not @clog/print-log?
           (println title)
           (prog/init paths-count))
         (walk [])
         (when-not @clog/print-log?
           (prog/done))
-        (tp-get-data processor)
+        (let [empty-paths (tp-get-data processor)]
+          (clog/info (str "Found " (count empty-paths) " empty paths"))
+          empty-paths)
         (finally
           (tp-show-stats processor))))))
 
@@ -662,10 +664,11 @@
     (clog/disable-logging!)
     (set-inspecting-on!)
     (let [pstore (pstore/elasticsearch-path-store es-url options)
-          sort (get-sort-or-dummy-fn (:sort options))]
-      (->> (tree-walker tenant paths pstore options empty-paths-remover)
-           (sort)
-           (map println)
-           (dorun)))
+          sort (get-sort-or-dummy-fn (:sort options))
+          empty-paths (->> (tree-walker tenant paths pstore options
+                                        empty-paths-remover)
+                           (sort))]
+      (newline)
+      (dorun (map println empty-paths)))
     (catch Exception e
       (clog/unhandled-error e))))
