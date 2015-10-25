@@ -568,10 +568,10 @@
       (t-get-raw-tree [this]
         @tree))))
 
-(defn- empty-paths-remover
-  "Empty paths remover."
+(defn- empty-paths-finder
+  "Empty paths finder."
   [tree-impl pstore tpool tenant paths options]
-  (let [removed-paths (atom [])]
+  (let [empty-paths (atom [])]
     (reify TreeProcessor
       (tp-get-title [this]
         "Checking paths")
@@ -588,11 +588,11 @@
             (when (t-path-empty? tree-impl path)
               (log/debug (str "Path '" spath "' is empty"))
               (t-delete-path tree-impl path)
-              (swap! removed-paths conj spath))
+              (swap! empty-paths conj spath))
             (when (and (not @clog/print-log?) (seq path))
               (prog/tick)))))
       (tp-get-data [this]
-        @removed-paths)
+        @empty-paths)
       (tp-show-stats [this]
         ))))
 
@@ -653,7 +653,7 @@
             pstore (pstore/elasticsearch-path-store es-url options)
             sort (get-sort-or-dummy-fn (:sort options))
             empty-paths (->> (tree-walker tenant paths pstore options
-                                          empty-paths-remover tpool)
+                                          empty-paths-finder tpool)
                              (sort))]
         (process-paths tenant empty-paths pstore options
                        remove-empty-paths-processor tpool)))
@@ -669,7 +669,7 @@
     (let [pstore (pstore/elasticsearch-path-store es-url options)
           sort (get-sort-or-dummy-fn (:sort options))
           empty-paths (->> (tree-walker tenant paths pstore options
-                                        empty-paths-remover)
+                                        empty-paths-finder)
                            (sort))]
       (newline)
       (dorun (map println empty-paths)))
