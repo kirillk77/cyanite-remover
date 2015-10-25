@@ -638,7 +638,6 @@
           (println title)
           (prog/init paths-count))
         (dorun (cp/upmap tpool walk (t-get tree-impl [])))
-        (walk [])
         (when-not @clog/print-log?
           (prog/done))
         (let [empty-paths (tp-get-data processor)]
