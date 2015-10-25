@@ -571,7 +571,9 @@
 (defn- empty-paths-finder
   "Empty paths finder."
   [tree-impl pstore tpool tenant paths options]
-  (let [empty-paths (atom [])]
+  (let [empty-paths (atom [])
+        processed (atom 0)
+        non-leafs (atom 0)]
     (reify TreeProcessor
       (tp-get-title [this]
         "Checking paths")
@@ -580,11 +582,16 @@
                    (partial add-path-to-tree tree-impl)))
       (tp-process-path [this path]
         (if (t-path-leaf? tree-impl path)
-          (when-not @clog/print-log?
-            (prog/tick-by (t-get tree-impl path)))
+          (let [leafs (t-get tree-impl path)]
+            (swap! processed + leafs)
+            (when-not @clog/print-log?
+              (prog/tick-by leafs)))
           (let [spath (path-list2str path)]
-            (if (seq path)
-              (clog/info (str "Checking path: " spath)))
+            (when (seq path)
+              (swap! processed inc)
+              (swap! non-leafs inc)
+              (when-not @inspecting?
+                (clog/info (str "Checking path: " spath))))
             (when (t-path-empty? tree-impl path)
               (log/debug (str "Path '" spath "' is empty"))
               (t-delete-path tree-impl path)
@@ -594,7 +601,14 @@
       (tp-get-data [this]
         @empty-paths)
       (tp-show-stats [this]
-        ))))
+        (let [empty-count (count @empty-paths)]
+          (log/info (format "Stats: processed %s, non-leafs: %s, empty: %s"
+                            @processed @non-leafs empty-count))
+          (newline)
+          (println "Stats:")
+          (println "  Processed: " @processed)
+          (println "  Non-leafs: " @non-leafs)
+          (println "  Empty:     " empty-count))))))
 
 (defn- tree-walker
   "Tree walker."
@@ -621,10 +635,12 @@
         (when-not @clog/print-log?
           (prog/done))
         (let [empty-paths (tp-get-data processor)]
-          (clog/info (str "Found " (count empty-paths) " empty paths"))
+          (when @inspecting?
+            (clog/info (str "Found " (count empty-paths) " empty paths")))
           empty-paths)
         (finally
-          (tp-show-stats processor))))))
+          (when-not @inspecting?
+            (tp-show-stats processor)))))))
 
 (defn- remove-empty-paths-processor
   "Empty path removal processor."
