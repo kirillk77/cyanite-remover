@@ -55,7 +55,7 @@
   (tp-get-data [this])
   (tp-show-stats [this]))
 
-(def paths-info (atom {}))
+(def paths-info (atom nil))
 
 (defn- set-inspecting-on!
   "Set the inspecting flag on."
@@ -436,9 +436,8 @@
 (defn- collect-path-info
   "Add a path to the paths info database."
   [path]
-  (let [path-name (:path path)
-        path-info {:leaf (:leaf path)}]
-    (swap! paths-info assoc path-name path-info)))
+  (when (:leaf path)
+    (swap! paths-info conj (:path path))))
 
 (defn- remove-obsolete-metrics-processor
   "Obsolete metrics removal processor."
@@ -448,6 +447,7 @@
       (mp-get-title [this]
         "Removing obsolete metrics")
       (mp-get-paths [this]
+        (swap! paths-info (fn [_] #{}))
         (get-paths pstore tenant paths (:exclude-paths options) (:sort options)
                    collect-path-info))
       (mp-get-paths-rollups [this]
@@ -495,8 +495,10 @@
                                             tpool)
             obsolete-paths (->> processed-data
                                 (get-paths-from-paths-rollups (first rollups))
-                                (filter #(:leaf (get @paths-info %)))
-                                (sort))]
+                                (filter #(contains? @paths-info %))
+                                (sort)
+                                (doall))]
+        (swap! paths-info (fn [_] nil))
         (process-paths tenant obsolete-paths pstore options
                        remove-obsolete-paths-processor tpool)))
     (catch Exception e
