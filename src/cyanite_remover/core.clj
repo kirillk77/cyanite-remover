@@ -303,8 +303,7 @@
 (defn- process-paths
   "Process paths."
   [tenant paths pstore options processor-fn & [tpool]]
-  (let [start-time (time/now)
-        tpool (get-thread-pool options tpool)
+  (let [tpool (get-thread-pool options tpool)
         processor (processor-fn pstore tenant options)
         title (pp-get-title processor)]
     (try
