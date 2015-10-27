@@ -65,7 +65,7 @@
 (defn- get-sort-or-dummy-fn
   "Get sort or dummy function."
   [sort?]
-  (if sort? sort #(do %)))
+  (if sort? sort identity))
 
 (defn- lookup-paths
   "Lookup paths."
@@ -73,7 +73,7 @@
    & [sidefx-fn]]
   (let [lookup-fn #(pstore/lookup pstore tenant leafs-only limit-depth %
                                   exclude-paths)
-        sidefx-wrapper (if sidefx-fn #(do (sidefx-fn %) %) #(do %))
+        sidefx-wrapper (if sidefx-fn #(do (sidefx-fn %) %) identity)
         sort (get-sort-or-dummy-fn sort-paths?)]
     (sort (map :path (map sidefx-wrapper (flatten (map lookup-fn paths)))))))
 
