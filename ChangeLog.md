@@ -1,5 +1,21 @@
 # cyanite-remover changes
 
+## 0.6.0
+
+This is a feature and maintenance release.
+
+* Add the `remove-empty-paths` command
+* Add the `list-empty-paths` command
+* Add the `sort` option. From this moment output is unsorted by default.
+* Use `delete` instead of `delete-by-query` to remove obsolete data
+* Add the `elasticsearch-scroll-batch-size` option
+* Add the `elasticsearch-scroll-batch-rate` option
+* Add the `elasticsearch-delete-request-rate` option
+* Remove the upper limit for the `cassandra-batch-rate` option
+* Add the defaults `/etc/default/cyanite-remover` file to the Debian package
+* Use set instead of hash-map for collecting paths information
+* Use a common thread pool in the `remove-obsolete-data` command
+
 ## 0.5.1
 
 This is a minor feature and bugfix release.
