@@ -1,5 +1,12 @@
 # cyanite-remover changes
 
+## 0.6.1
+
+This is a bugfix release.
+
+* Remove the `exclude-paths` options from commands `remove-empty-paths` and
+`list-empty-paths` as useless and harmful
+
 ## 0.6.0
 
 This is a feature and maintenance release.

@@ -157,7 +157,7 @@
   "Run command 'remove-empty-paths'."
   [command arguments options summary]
   (check-arguments "remove-paths" arguments 3 3)
-  (check-options command #{:run :exclude-paths :jobs :sort :elasticsearch-index
+  (check-options command #{:run :jobs :sort :elasticsearch-index
                            :elasticsearch-scroll-batch-size
                            :elasticsearch-scroll-batch-rate
                            :elasticsearch-delete-request-rate :log-file
@@ -208,7 +208,7 @@
   "Run command 'list-empty-paths'."
   [command arguments options summary]
   (check-arguments "list-paths" arguments 3 3)
-  (check-options command #{:exclude-paths :jobs :sort :elasticsearch-index
+  (check-options command #{:jobs :sort :elasticsearch-index
                            :elasticsearch-scroll-batch-size
                            :elasticsearch-scroll-batch-rate} options)
   (let [{:keys [tenant paths es-url
