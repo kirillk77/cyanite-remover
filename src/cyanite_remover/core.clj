@@ -581,7 +581,7 @@
       (tp-get-title [this]
         "Checking paths")
       (tp-get-paths [this]
-        (get-paths pstore tenant paths (:exclude-paths options) false
+        (get-paths pstore tenant paths nil false
                    (partial add-path-to-tree tree-impl)))
       (tp-process-path [this path]
         ;; Leaf?
