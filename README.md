@@ -62,8 +62,12 @@ Built package will be placed in the `target` directory.
 
     cyanite-remover [options] remove-metrics <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>
     cyanite-remover [options] remove-paths <tenant> <path,...> <elasticsearch_url>
+    cyanite-remover [options] remove-obsolete-data <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>
+    cyanite-remover [options] remove-empty-paths <tenant> <path,...> <elasticsearch_url>
     cyanite-remover [options] list-metrics <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>
     cyanite-remover [options] list-paths <tenant> <path,...> <elasticsearch_url>
+    cyanite-remover [options] list-obsolete-data <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>
+    cyanite-remover [options] list-empty-paths <tenant> <path,...> <elasticsearch_url>
     cyanite-remover help
 
 See [commands](#commands), [arguments](#arguments) and [options](#options) for
@@ -73,8 +77,12 @@ more details.
 
 * [remove-metrics](#remove-metrics)
 * [remove-paths](#remove-paths)
+* [remove-obsolete-data](#remove-obsolete-data)
+* [remove-empty-paths](#remove-empty-paths)
 * [list-metrics](#list-metrics)
 * [list-paths](#list-paths)
+* [list-obsolete-data](#list-obsolete-data)
+* [list-empty-paths](#list-empty-paths)
 * [help](#help)
 
 #### `remove-metrics`
@@ -122,6 +130,39 @@ are going to remove the desired data!**
 **Always remove metrics first. Deletion of paths will make it impossible to
 remove relevant metrics!**
 
+#### remove-obsolete-data
+
+Remove obsolete (has not been updated in a while) data (metrics and paths) from
+Cassandra and Elasticsearch.
+
+*`cyanite-remover` `remove-obsolete-data`* [[*`options`*](#options)]
+[*`tenant`*](#tenant) [*`rollup(s)`*](#rollups) [*`path(s)`*](#paths)
+[*`cassandra_host(s)`*](#cassandra_hosts)
+[*`elasticsearch_url`*](#elasticsearch_url)
+
+Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
+[`cassandra-batch-size`](#cassandra-batch-size),
+[`cassandra-channel-size`](#cassandra-channel-size),
+[`cassandra-keyspace`](#cassandra-keyspace),
+[`cassandra-options`](#cassandra-options), [`disable-log`](#disable-log),
+[`disable-progress`](#disable-progress),
+[`elasticsearch-index`](#elasticsearch-index), [`from`](#from),
+[`jobs`](#jobs), [`log-file`](#log-file), [`log-level`](#log-level),
+[`run`](#run), [`to`](#to), [`stop-on-error`](#stop-on-error).
+
+#### remove-empty-paths
+
+Remove empty (without children) non-leaf paths.
+
+*`cyanite-remover` `remove-empty-paths`* [[*`options`*](#options)]
+[*`tenant`*](#tenant) [*`path(s)`*](#paths)
+[*`elasticsearch_url`*](#elasticsearch_url)
+
+Available options: [`disable-log`](#disable-log),
+[`disable-progress`](#disable-progress),
+[`elasticsearch-index`](#elasticsearch-index), [`log-file`](#log-file),
+[`log-level`](#log-level), [`run`](#run).
+
 #### `list-metrics`
 
 List metrics from Cassandra.
@@ -148,6 +189,19 @@ List paths from Elasticsearch.
 Available options: [`elasticsearch-index`](#elasticsearch-index).
 
 See example of usage [here](#listing-paths-from-elasticsearch).
+
+#### list-empty-paths
+
+List empty (without children) non-leaf paths.
+
+*`cyanite-remover` `list-empty-paths`* [[*`options`*](#options)]
+[*`tenant`*](#tenant) [*`path(s)`*](#paths)
+[*`elasticsearch_url`*](#elasticsearch_url)
+
+Available options: [`disable-log`](#disable-log),
+[`disable-progress`](#disable-progress),
+[`elasticsearch-index`](#elasticsearch-index), [`log-file`](#log-file),
+[`log-level`](#log-level), [`run`](#run).
 
 #### `help`
 
