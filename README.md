@@ -268,20 +268,26 @@ Options in alphabet order:
 * [cassandra-options](#cassandra-options)
 * [disable-progress](#disable-progress)
 * [elasticsearch-index](#elasticsearch-index)
+* [elasticsearch-delete-request-rate](#elasticsearch-delete-request-rate)
+* [elasticsearch-scroll-batch-rate](#elasticsearch-scroll-batch-rate)
+* [elasticsearch-scroll-batch-size](#elasticsearch-scroll-batch-size)
+* [exclude-paths](#exclude-paths)
 * [from](#from)
 * [help](#help)
 * [jobs](#jobs)
 * [log-file](#log-file)
 * [log-level](#log-level)
 * [run](#run)
+* [sort](sort)
 * [stop-on-error](#stop-on-error)
 * [to](#to)
+* [threshold](#threshold)
 
 #### `cassandra-batch-rate`
 
 `--cassandra-batch-rate` `RATE`
 
-Set the Cassandra batch rate (batches per second, 1-100).
+Set the Cassandra batch rate (batches per second).
 
 Throttling is not used by default.
 
@@ -333,6 +339,38 @@ Set the Elasticsearch index.
 
 Default: `cyanite_paths`
 
+#### `elasticsearch-delete-request-rate`
+
+`--elasticsearch-delete-request-rate` `RATE`
+
+Set the Elasticsearch delete request rate (requests per second).
+
+Throttling is not used by default.
+
+#### `elasticsearch-scroll-batch-rate`
+
+`--elasticsearch-scroll-batch-rate` `RATE`
+
+Set the Elasticsearch scroll batch rate (batches per second).
+
+Throttling is not used by default.
+
+#### `elasticsearch-scroll-batch-size`
+
+`--elasticsearch-scroll-batch-size` `SIZE`
+
+Set the Elasticsearch scroll batch size.
+
+Default: `100000`
+
+#### exclude-paths
+
+`-e`, `--exclude-paths` `PATHS`
+
+A semicolon-separated list of paths to exclude from processing.
+
+See [`path(s)`](#paths) for more details.
+
 #### `from`
 
 `-f`, `--from` `FROM`
@@ -373,6 +411,27 @@ Default: `info`
 
 Force a normal run. **Dry run using on default.**
 
+#### `sort`
+
+`-s`, `--sort`
+
+Sort paths in alphabetical order. From version 0.6.1 output is unsorted by
+default.
+
+#### `stop-on-error`
+
+`-S`, `--stop-on-error`
+
+Stop on the first non-fatal error.
+
+### `threshold`
+
+`-T`, `--threshold` `THRESHOLD`
+
+Threshold in seconds. Option is used to search for obsolete data. See commands
+[`remove-obsolete-data`](#remove-obsolete-data) and
+[`list-obsolete-data`](#list-obsolete-data) for more details.
+
 #### `to`
 
 `-t`, `--to` `TO`
@@ -381,12 +440,6 @@ Set until time in the
 [Unix (POSIX, epoch) time](https://en.wikipedia.org/wiki/Unix_time) format.
 
 Example: `1421280000`
-
-#### `stop-on-error`
-
-`-S`, `--stop-on-error`
-
-Stop on the first non-fatal error.
 
 ## Usage Scenarios
 
