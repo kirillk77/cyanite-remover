@@ -291,7 +291,7 @@ Options in alphabet order:
 * [log-file](#log-file)
 * [log-level](#log-level)
 * [run](#run)
-* [sort](sort)
+* [sort](#sort)
 * [stop-on-error](#stop-on-error)
 * [to](#to)
 * [threshold](#threshold)
