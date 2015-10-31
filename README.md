@@ -154,10 +154,13 @@ Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 [`cassandra-keyspace`](#cassandra-keyspace),
 [`cassandra-options`](#cassandra-options), [`disable-log`](#disable-log),
 [`disable-progress`](#disable-progress),
-[`elasticsearch-index`](#elasticsearch-index), [`from`](#from),
-[`jobs`](#jobs), [`log-file`](#log-file), [`log-level`](#log-level),
-[`run`](#run), [`stop-on-error`](#stop-on-error), [`threshold`](#threshold),
-[`to`](#to).
+[`elasticsearch-delete-request-rate`](#elasticsearch-delete-request-rate),
+[`elasticsearch-index`](#elasticsearch-index),
+[`elasticsearch-scroll-batch-rate`](#elasticsearch-scroll-batch-rate),
+[`elasticsearch-scroll-batch-size`](#elasticsearch-scroll-batch-size),
+[`exclude-paths`](#exclude-paths), [`jobs`](#jobs), [`log-file`](#log-file),
+[`log-level`](#log-level), [`run`](#run), [`sort`](#sort),
+[`stop-on-error`](#stop-on-error), [`threshold`](#threshold).
 
 #### `remove-empty-paths`
 
@@ -171,8 +174,12 @@ An empty path is a non-leaf path that has no children.
 
 Available options: [`disable-log`](#disable-log),
 [`disable-progress`](#disable-progress),
-[`elasticsearch-index`](#elasticsearch-index), [`log-file`](#log-file),
-[`log-level`](#log-level), [`run`](#run).
+[`elasticsearch-delete-request-rate`](#elasticsearch-delete-request-rate),
+[`elasticsearch-index`](#elasticsearch-index),
+[`elasticsearch-scroll-batch-rate`](#elasticsearch-scroll-batch-rate),
+[`elasticsearch-scroll-batch-size`](#elasticsearch-scroll-batch-size),
+[`jobs`](#jobs), [`log-file`](#log-file), [`log-level`](#log-level),
+[`run`](#run), [`sort`](#sort), [`stop-on-error`](#stop-on-error).
 
 #### `list-metrics`
 
@@ -212,16 +219,13 @@ List obsolete data.
 
 See command [`remove-obsolete-data`](#remove-obsolete-data) for more details.
 
-Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
-[`cassandra-batch-size`](#cassandra-batch-size),
-[`cassandra-channel-size`](#cassandra-channel-size),
-[`cassandra-keyspace`](#cassandra-keyspace),
-[`cassandra-options`](#cassandra-options), [`disable-log`](#disable-log),
-[`disable-progress`](#disable-progress),
-[`elasticsearch-index`](#elasticsearch-index), [`from`](#from),
-[`jobs`](#jobs), [`log-file`](#log-file), [`log-level`](#log-level),
-[`run`](#run), [`stop-on-error`](#stop-on-error), [`threshold`](#threshold),
-[`to`](#to).
+Available options: [`cassandra-keyspace`](#cassandra-keyspace),
+[`cassandra-options`](#cassandra-options),
+[`elasticsearch-index`](#elasticsearch-index),
+[`elasticsearch-scroll-batch-rate`](#elasticsearch-scroll-batch-size),
+[`elasticsearch-scroll-batch-size`](#elasticsearch-scroll-batch-size),
+[`exclude-paths`](#exclude-paths), [`jobs`](#jobs), [`sort`](#sort),
+[`threshold`](#threshold).
 
 #### `list-empty-paths`
 
@@ -233,10 +237,10 @@ List empty paths.
 
 See command [`remove-empty-paths`](#remove-empty-paths) for more details.
 
-Available options: [`disable-log`](#disable-log),
-[`disable-progress`](#disable-progress),
-[`elasticsearch-index`](#elasticsearch-index), [`log-file`](#log-file),
-[`log-level`](#log-level), [`run`](#run).
+Available options: [`elasticsearch-index`](#elasticsearch-index),
+[`elasticsearch-scroll-batch-rate`](#elasticsearch-scroll-batch-size),
+[`elasticsearch-scroll-batch-size`](#elasticsearch-scroll-batch-size),
+[`jobs`](#jobs), [`sort`](#sort).
 
 #### `help`
 
