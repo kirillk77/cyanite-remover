@@ -132,13 +132,21 @@ remove relevant metrics!**
 
 #### remove-obsolete-data
 
-Remove obsolete (has not been updated in a while) data (metrics and paths) from
-Cassandra and Elasticsearch.
+Remove obsolete data from Cassandra and Elasticsearch.
 
 *`cyanite-remover` `remove-obsolete-data`* [[*`options`*](#options)]
 [*`tenant`*](#tenant) [*`rollup(s)`*](#rollups) [*`path(s)`*](#paths)
 [*`cassandra_host(s)`*](#cassandra_hosts)
 [*`elasticsearch_url`*](#elasticsearch_url)
+
+Obsolete data is metrics that has not been updated in a while and its
+paths.
+
+By default, a metric is considered obsolete if it has not been updated for
+2678400 seconds (31 day).
+
+The threshold of the obsolescence can be adjusted using the
+[`threshold`](#threshold) option.
 
 Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 [`cassandra-batch-size`](#cassandra-batch-size),
@@ -148,15 +156,18 @@ Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 [`disable-progress`](#disable-progress),
 [`elasticsearch-index`](#elasticsearch-index), [`from`](#from),
 [`jobs`](#jobs), [`log-file`](#log-file), [`log-level`](#log-level),
-[`run`](#run), [`to`](#to), [`stop-on-error`](#stop-on-error).
+[`run`](#run), [`stop-on-error`](#stop-on-error), [`threshold`](#threshold),
+[`to`](#to).
 
 #### remove-empty-paths
 
-Remove empty (without children) non-leaf paths.
+Remove empty paths.
 
 *`cyanite-remover` `remove-empty-paths`* [[*`options`*](#options)]
 [*`tenant`*](#tenant) [*`path(s)`*](#paths)
 [*`elasticsearch_url`*](#elasticsearch_url)
+
+An empty path is a non-leaf path that has no children.
 
 Available options: [`disable-log`](#disable-log),
 [`disable-progress`](#disable-progress),
@@ -192,11 +203,13 @@ See example of usage [here](#listing-paths-from-elasticsearch).
 
 #### list-empty-paths
 
-List empty (without children) non-leaf paths.
+List empty paths.
 
 *`cyanite-remover` `list-empty-paths`* [[*`options`*](#options)]
 [*`tenant`*](#tenant) [*`path(s)`*](#paths)
 [*`elasticsearch_url`*](#elasticsearch_url)
+
+See command [`remove-empty-paths`](#remove-empty-paths) for more details.
 
 Available options: [`disable-log`](#disable-log),
 [`disable-progress`](#disable-progress),
@@ -428,8 +441,9 @@ Stop on the first non-fatal error.
 
 `-T`, `--threshold` `THRESHOLD`
 
-Threshold in seconds. Option is used to search for obsolete data. See commands
-[`remove-obsolete-data`](#remove-obsolete-data) and
+Threshold in seconds. Option is used to search for obsolete data.
+
+See commands [`remove-obsolete-data`](#remove-obsolete-data) and
 [`list-obsolete-data`](#list-obsolete-data) for more details.
 
 #### `to`
