@@ -100,9 +100,12 @@ Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 [`cassandra-keyspace`](#cassandra-keyspace),
 [`cassandra-options`](#cassandra-options), [`disable-log`](#disable-log),
 [`disable-progress`](#disable-progress),
-[`elasticsearch-index`](#elasticsearch-index), [`from`](#from),
-[`jobs`](#jobs), [`log-file`](#log-file), [`log-level`](#log-level),
-[`run`](#run), [`stop-on-error`](#stop-on-error), [`to`](#to).
+[`elasticsearch-index`](#elasticsearch-index),
+[`elasticsearch-scroll-batch-rate`](#elasticsearch-scroll-batch-rate),
+[`elasticsearch-scroll-batch-size`](#elasticsearch-scroll-batch-size),
+[`exclude-paths`](#exclude-paths), [`from`](#from), [`jobs`](#jobs),
+[`log-file`](#log-file), [`log-level`](#log-level), [`run`](#run),
+[`sort`](#sort), [`stop-on-error`](#stop-on-error), [`to`](#to).
 
 See example of usage [here](#removing-metrics-from-cassandra).
 
@@ -119,8 +122,11 @@ Remove paths from Elasticsearch.
 
 Available options: [`disable-log`](#disable-log),
 [`disable-progress`](#disable-progress),
-[`elasticsearch-index`](#elasticsearch-index), [`log-file`](#log-file),
-[`log-level`](#log-level), [`run`](#run).
+[`elasticsearch-index`](#elasticsearch-index),
+[`elasticsearch-scroll-batch-rate`](#elasticsearch-scroll-batch-rate),
+[`elasticsearch-scroll-batch-size`](#elasticsearch-scroll-batch-size),
+[`exclude-paths`](#exclude-paths), [`log-file`](#log-file),
+[`log-level`](#log-level), [`run`](#run), [`sort`](#sort),.
 
 See example of usage [here](#removing-paths-from-elasticsearch).
 
@@ -192,7 +198,11 @@ List metrics from Cassandra.
 
 Available options: [`cassandra-keyspace`](#cassandra-keyspace),
 [`cassandra-options`](#cassandra-options),
-[`elasticsearch-index`](#elasticsearch-index), [`from`](#from), [`to`](#to).
+[`elasticsearch-index`](#elasticsearch-index),
+[`elasticsearch-scroll-batch-rate`](#elasticsearch-scroll-batch-rate),
+[`elasticsearch-scroll-batch-size`](#elasticsearch-scroll-batch-size),
+[`exclude-paths`](#exclude-paths), [`from`](#from), [`sort`](#sort),
+[`to`](#to).
 
 See example of usage [here](#listing-metrics-from-cassandra).
 
@@ -204,7 +214,10 @@ List paths from Elasticsearch.
 [*`tenant`*](#tenant) [*`path(s)`*](#paths)
 [*`elasticsearch_url`*](#elasticsearch_url)
 
-Available options: [`elasticsearch-index`](#elasticsearch-index).
+Available options: [`elasticsearch-index`](#elasticsearch-index),
+[`elasticsearch-scroll-batch-rate`](#elasticsearch-scroll-batch-rate),
+[`elasticsearch-scroll-batch-size`](#elasticsearch-scroll-batch-size),
+[`exclude-paths`](#exclude-paths), [`sort`](#sort).
 
 See example of usage [here](#listing-paths-from-elasticsearch).
 
