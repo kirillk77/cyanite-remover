@@ -222,7 +222,7 @@ See command [`remove-obsolete-data`](#remove-obsolete-data) for more details.
 Available options: [`cassandra-keyspace`](#cassandra-keyspace),
 [`cassandra-options`](#cassandra-options),
 [`elasticsearch-index`](#elasticsearch-index),
-[`elasticsearch-scroll-batch-rate`](#elasticsearch-scroll-batch-size),
+[`elasticsearch-scroll-batch-rate`](#elasticsearch-scroll-batch-rate),
 [`elasticsearch-scroll-batch-size`](#elasticsearch-scroll-batch-size),
 [`exclude-paths`](#exclude-paths), [`jobs`](#jobs), [`sort`](#sort),
 [`threshold`](#threshold).
@@ -238,7 +238,7 @@ List empty paths.
 See command [`remove-empty-paths`](#remove-empty-paths) for more details.
 
 Available options: [`elasticsearch-index`](#elasticsearch-index),
-[`elasticsearch-scroll-batch-rate`](#elasticsearch-scroll-batch-size),
+[`elasticsearch-scroll-batch-rate`](#elasticsearch-scroll-batch-rate),
 [`elasticsearch-scroll-batch-size`](#elasticsearch-scroll-batch-size),
 [`jobs`](#jobs), [`sort`](#sort).
 
