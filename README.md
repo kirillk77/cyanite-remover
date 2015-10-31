@@ -102,7 +102,7 @@ Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 [`disable-progress`](#disable-progress),
 [`elasticsearch-index`](#elasticsearch-index), [`from`](#from),
 [`jobs`](#jobs), [`log-file`](#log-file), [`log-level`](#log-level),
-[`run`](#run), [`to`](#to), [`stop-on-error`](#stop-on-error).
+[`run`](#run), [`stop-on-error`](#stop-on-error), [`to`](#to).
 
 See example of usage [here](#removing-metrics-from-cassandra).
 
@@ -130,7 +130,7 @@ are going to remove the desired data!**
 **Always remove metrics first. Deletion of paths will make it impossible to
 remove relevant metrics!**
 
-#### remove-obsolete-data
+#### `remove-obsolete-data`
 
 Remove obsolete data from Cassandra and Elasticsearch.
 
@@ -159,7 +159,7 @@ Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 [`run`](#run), [`stop-on-error`](#stop-on-error), [`threshold`](#threshold),
 [`to`](#to).
 
-#### remove-empty-paths
+#### `remove-empty-paths`
 
 Remove empty paths.
 
@@ -201,7 +201,29 @@ Available options: [`elasticsearch-index`](#elasticsearch-index).
 
 See example of usage [here](#listing-paths-from-elasticsearch).
 
-#### list-empty-paths
+#### `list-obsolete-data`
+
+List obsolete data.
+
+*`cyanite-remover` `remove-obsolete-data`* [[*`options`*](#options)]
+[*`tenant`*](#tenant) [*`rollup(s)`*](#rollups) [*`path(s)`*](#paths)
+[*`cassandra_host(s)`*](#cassandra_hosts)
+[*`elasticsearch_url`*](#elasticsearch_url)
+
+See command [`remove-obsolete-data`](#remove-obsolete-data) for more details.
+
+Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
+[`cassandra-batch-size`](#cassandra-batch-size),
+[`cassandra-channel-size`](#cassandra-channel-size),
+[`cassandra-keyspace`](#cassandra-keyspace),
+[`cassandra-options`](#cassandra-options), [`disable-log`](#disable-log),
+[`disable-progress`](#disable-progress),
+[`elasticsearch-index`](#elasticsearch-index), [`from`](#from),
+[`jobs`](#jobs), [`log-file`](#log-file), [`log-level`](#log-level),
+[`run`](#run), [`stop-on-error`](#stop-on-error), [`threshold`](#threshold),
+[`to`](#to).
+
+#### `list-empty-paths`
 
 List empty paths.
 
