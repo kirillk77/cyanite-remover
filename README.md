@@ -22,9 +22,13 @@ tool.
   * [Inspecting](#inspecting)
     * [Listing Metrics from Cassandra](#listing-metrics-from-cassandra)
     * [Listing Paths from Elasticsearch](#listing-paths-from-elasticsearch)
+    * [Listing Obsolete Data](#listing-obsolete-data)
+    * [Listing Empty Paths](#listing-empty-paths)
   * [Removing](#removing)
     * [Removing Metrics from Cassandra](#removing-metrics-from-cassandra)
     * [Removing Paths from Elasticsearch](#removing-paths-from-elasticsearch)
+    * [Removing Obsolete Data](#removing-obsolete-data)
+    * [Removing Empty Paths](#removing-empty-paths)
 * [License](#license)
 * [Thanks](#thanks)
 
@@ -168,6 +172,11 @@ Available options: [`cassandra-batch-rate`](#cassandra-batch-rate),
 [`log-level`](#log-level), [`run`](#run), [`sort`](#sort),
 [`stop-on-error`](#stop-on-error), [`threshold`](#threshold).
 
+See example of usage [here](#removing-obsolete-data).
+
+**Before removing data, [make sure](#listing-obsolete-data) that you are going
+to remove the desired data!**
+
 #### `remove-empty-paths`
 
 Remove empty paths.
@@ -186,6 +195,11 @@ Available options: [`disable-log`](#disable-log),
 [`elasticsearch-scroll-batch-size`](#elasticsearch-scroll-batch-size),
 [`jobs`](#jobs), [`log-file`](#log-file), [`log-level`](#log-level),
 [`run`](#run), [`sort`](#sort), [`stop-on-error`](#stop-on-error).
+
+See example of usage [here](#removing-empty-paths).
+
+**Before removing data, [make sure](#listing-empty-paths) that you are going to
+remove the desired data!**
 
 #### `list-metrics`
 
@@ -240,6 +254,8 @@ Available options: [`cassandra-keyspace`](#cassandra-keyspace),
 [`exclude-paths`](#exclude-paths), [`jobs`](#jobs), [`sort`](#sort),
 [`threshold`](#threshold).
 
+See example of usage [here](#listing-obsolete-data).
+
 #### `list-empty-paths`
 
 List empty paths.
@@ -254,6 +270,8 @@ Available options: [`elasticsearch-index`](#elasticsearch-index),
 [`elasticsearch-scroll-batch-rate`](#elasticsearch-scroll-batch-rate),
 [`elasticsearch-scroll-batch-size`](#elasticsearch-scroll-batch-size),
 [`jobs`](#jobs), [`sort`](#sort).
+
+See example of usage [here](#listing-empty-paths).
 
 #### `help`
 
@@ -503,7 +521,7 @@ Before removing data, you may want to inspect the data to be removed.
 #### Listing Metrics from Cassandra
 
 ```bash
-cyanite-remover list-metrics my_tenant 60:5356800,900:62208000 \
+cyanite-remover --sort list-metrics my_tenant 60:5356800,900:62208000 \
   "requests.nginx.*;node[3-17].cpu.?" cass1.example.org \
   http://es.example.org:9200
 ```
@@ -513,18 +531,36 @@ See command [`list-metrics`](#list-metrics) for more details.
 #### Listing Paths from Elasticsearch
 
 ```bash
-cyanite-remover list-paths my_tenant "requests.nginx.*;node[3-17].cpu.?" \
-  http://es.example.org:9200
+cyanite-remover --sort list-paths my_tenant "requests.nginx.*;node[3-17].cpu.?" \
+  http://es.example.org:9200 --list
 ```
 
 See command [`list-paths`](#list-paths) for more details.
+
+#### Listing Obsolete Data
+
+```bash
+cyanite-remover --threshold 5356800 --exclude-paths "billing.*" --jobs 64 \
+  --sort list-obsolete-data my_tenant 60:5356800,900:62208000 "*" \
+  cass1.example.org http://es.example.org:9200
+```
+
+See command [`list-obsolete-data`](#list-obsolete-data) for more details.
+
+#### Listing Empty Paths
+
+```bash
+cyanite-remover --sort list-empty-paths my_tenant "*" http://es.example.org:9200
+```
+
+See command [`list-empty-paths`](#list-empty-paths) for more details.
 
 ### Removing
 
 #### Removing Metrics from Cassandra
 
 ```bash
-cyanite-remover --run --jobs 8 --cassandra-options "{:compression :lz4}" \
+cyanite-remover --run --jobs 8 --sort --cassandra-options "{:compression :lz4}" \
   remove-metrics my_tenant 60:5356800,900:62208000 \
   "requests.nginx.*;node[3-17].cpu.?" cass1.example.org \
   http://es.example.org:9200
@@ -538,7 +574,7 @@ are going to remove the desired data!**
 #### Removing Paths from Elasticsearch
 
 ```bash
-cyanite-remover --run remove-paths my_tenant \
+cyanite-remover --run --sort remove-paths my_tenant \
   "requests.nginx.*;node[3-17].cpu.?" http://es.example.org:9200
 ```
 
@@ -549,6 +585,31 @@ are going to remove the desired data!**
 
 **Always remove metrics first. Deletion of paths will make it impossible to
 remove relevant metrics!**
+
+#### Removing Obsolete Data
+
+```bash
+cyanite-remover --run --threshold 5356800 --exclude-paths "billing.*" \
+  --jobs 64 remove-obsolete-data my_tenant 60:5356800,900:62208000 "*" \
+  cass1.example.org http://es.example.org:9200
+```
+
+See command [`remove-obsolete-data`](#remove-obsolete-data) for more details.
+
+**Before removing data, [make sure](#listing-obsolete-data) that you are going
+to remove the desired data!**
+
+#### Removing Empty Paths
+
+```bash
+cyanite-remover --run --sort remove-empty-paths my_tenant "*" \
+  http://es.example.org:9200
+```
+
+See command [`remove-empty-paths`](#remove-empty-paths) for more details.
+
+**Before removing data, [make sure](#listing-empty-paths) that you are going
+to remove the desired data!**
 
 ## License
 
