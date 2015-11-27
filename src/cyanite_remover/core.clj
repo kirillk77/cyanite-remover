@@ -385,9 +385,8 @@
                       "path: " path ", "
                       "rollup: " rollup ", "
                       "period: " period)))
-    (let [data (mstore/fetch mstore tenant rollup period path from nil 1)
-          obsolete? (not (seq data))]
-      (if obsolete?
+    (let [data (mstore/fetch mstore tenant rollup period path from nil 1)]
+      (if (and (not= data :mstore-error) (not (seq data)))
         (do
           (log/debug (str "Metrics on path '" path "' are obsolete"))
           [path rollup-def])
