@@ -11,7 +11,7 @@
                  [cc.qbits/alia "2.5.3"]
                  [net.jpountz.lz4/lz4 "1.3.0"]
                  [org.xerial.snappy/snappy-java "1.1.2"]
-                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
+                 [org.clojure/core.async "0.2.374"]
                  [clojurewerkz/elastisch "2.2.0-beta4"]
                  [throttler "1.0.0"]
                  [com.climate/claypoole "1.1.0"]
