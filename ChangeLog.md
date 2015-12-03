@@ -9,6 +9,7 @@ This is a maintenance and bugfix release.
 * Add missing try-catch clauses to handle exceptions inside threads
 * Cleanup code in `path_store.clj`
 * core.async 0.2.374
+* Update the documentation
 
 ## 0.6.1
 
