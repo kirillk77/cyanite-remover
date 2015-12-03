@@ -2,7 +2,7 @@
 
 set -e
 
-readonly VERSION=0.6.2-SNAPSHOT
+readonly VERSION=0.6.2
 readonly JAR_FILE="cyanite-remover-$VERSION-standalone.jar"
 readonly SCRIPT_DIR=$(dirname $0)
 readonly NEAR_FILE=$SCRIPT_DIR/$JAR_FILE
