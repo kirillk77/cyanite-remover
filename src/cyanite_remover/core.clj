@@ -187,7 +187,8 @@
       (mp-process processor rollup period path from to))
     (catch Exception e
       (clog/error (str "Metric processing error: " e ", "
-                       "path: " path) e))))
+                       "path: " path ", "
+                       "rollup: " rollup-def) e))))
 
 (defn- process-metrics
   "Process metrics."
