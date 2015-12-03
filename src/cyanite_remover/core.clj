@@ -527,8 +527,7 @@
     (clog/disable-logging!)
     (set-inspecting-on!)
     (cp/with-shutdown! [tpool (get-thread-pool options)]
-      (let [tpool (get-thread-pool options)
-            mstore (mstore/cassandra-metric-store cass-hosts options)
+      (let [mstore (mstore/cassandra-metric-store cass-hosts options)
             pstore (pstore/elasticsearch-path-store es-url options)
             sort (get-sort-or-dummy-fn (:sort options))
             obsolete-data (->> (get-paths pstore tenant paths
@@ -635,9 +634,8 @@
 
 (defn- tree-walker
   "Tree walker."
-  [tenant paths pstore options tree-processor-fn & [tpool]]
-  (let [tpool (get-thread-pool options tpool)
-        tree-impl (hm-tree)
+  [tenant paths pstore options tree-processor-fn tpool]
+  (let [tree-impl (hm-tree)
         processor (tree-processor-fn tree-impl pstore tpool tenant paths options)
         title (tp-get-title processor)
         paths-count (doall (tp-get-paths processor))]
@@ -706,12 +704,13 @@
   (try
     (clog/disable-logging!)
     (set-inspecting-on!)
-    (let [pstore (pstore/elasticsearch-path-store es-url options)
-          sort (get-sort-or-dummy-fn (:sort options))
-          empty-paths (->> (tree-walker tenant paths pstore options
-                                        empty-paths-finder)
-                           (sort))]
-      (newline)
-      (dorun (map println empty-paths)))
+    (cp/with-shutdown! [tpool (get-thread-pool options)]
+      (let [pstore (pstore/elasticsearch-path-store es-url options)
+            sort (get-sort-or-dummy-fn (:sort options))
+            empty-paths (->> (tree-walker tenant paths pstore options
+                                          empty-paths-finder tpool)
+                             (sort))]
+        (newline)
+        (dorun (map println empty-paths))))
     (catch Exception e
       (clog/unhandled-error e))))
