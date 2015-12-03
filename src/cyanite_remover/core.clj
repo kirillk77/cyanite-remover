@@ -640,10 +640,13 @@
         title (tp-get-title processor)
         paths-count (doall (tp-get-paths processor))]
     (letfn [(walk [path]
-              (when-not (t-path-leaf? tree-impl path)
-                (dorun (map walk (t-get tree-impl path))))
-              (when (seq path)
-                (tp-process-path processor path)))]
+              (try
+                (when-not (t-path-leaf? tree-impl path)
+                  (dorun (map walk (t-get tree-impl path))))
+                (when (seq path)
+                  (tp-process-path processor path))
+                (clog/error (str "Error in tree walker: " e ", "
+                                 "path: " path) e)))]
       (try
         (prog/set-progress-bar!
          "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
