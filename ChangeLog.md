@@ -1,5 +1,15 @@
 # cyanite-remover changes
 
+## 0.6.2
+
+This is a maintenance and bugfix release.
+
+* Handle errors in the `check-metric-obsolete` function
+* Use `com.climate.claypoole/with-shutdown!` for thread pools
+* Add missing try-catch clauses to handle exceptions inside threads
+* Cleanup code in `path_store.clj`
+* core.async 0.2.374
+
 ## 0.6.1
 
 This is a bugfix release.
