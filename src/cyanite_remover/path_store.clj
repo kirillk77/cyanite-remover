@@ -192,17 +192,16 @@
     (reify
       PathStore
       (lookup [this tenant leafs-only limit-depth path exclude-paths]
-        (let []
-          (try
-            (let [paths (search search-fn scroll-fn tenant leafs-only
-                                limit-depth path scroll-batch-size
-                                scroll-batch-rate)
-                  re-excludes (re-pattern (join-wildcards exclude-paths))]
-              (if-not exclude-paths
-                paths
-                (remove #(re-matches re-excludes (:path %)) paths)))
-            (catch Exception e
-              (log-error e path stats-errors)))))
+        (try
+          (let [paths (search search-fn scroll-fn tenant leafs-only
+                              limit-depth path scroll-batch-size
+                              scroll-batch-rate)
+                re-excludes (re-pattern (join-wildcards exclude-paths))]
+            (if-not exclude-paths
+              paths
+              (remove #(re-matches re-excludes (:path %)) paths)))
+          (catch Exception e
+            (log-error e path stats-errors))))
       (delete [this tenant path]
         (delete-fn tenant path))
       (delete-query [this tenant leafs-only limit-depth path]
