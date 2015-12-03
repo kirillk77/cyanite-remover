@@ -301,11 +301,21 @@
     (catch Exception e
       (clog/unhandled-error e))))
 
+(defn- process-path
+  "Process a path."
+  [processor path]
+  (try
+    (pp-process processor path)
+    (catch Exception e
+      (clog/error (str "Path processing error: " e ", "
+                       "path: " path) e))))
+
 (defn- process-paths
   "Process paths."
   [tenant paths pstore options processor-fn tpool]
   (let [processor (processor-fn pstore tenant options)
-        title (pp-get-title processor)]
+        title (pp-get-title processor)
+        proc-fn (partial process-path processor)]
     (try
       (prog/set-progress-bar!
        "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
@@ -315,8 +325,7 @@
       (when-not @clog/print-log?
         (println title)
         (prog/init (count paths)))
-      (let [futures (doall (map #(cp/future tpool (pp-process processor %))
-                                paths))]
+      (let [futures (doall (map #(cp/future tpool (proc-fn %)) paths))]
         (dorun (process-futures futures)))
       (when-not @clog/print-log?
         (prog/done))
@@ -380,19 +389,24 @@
 (defn- check-metric-obsolete
   "Check a metric for obsolescence."
   [mstore tenant from path rollup-def]
-  (let [rollup (first rollup-def)
-        period (last rollup-def)]
-    (when-not @inspecting?
-      (clog/info (str "Checking metrics: "
-                      "path: " path ", "
-                      "rollup: " rollup ", "
-                      "period: " period)))
-    (let [data (mstore/fetch mstore tenant rollup period path from nil 1)]
-      (if (and (not= data :mstore-error) (not (seq data)))
-        (do
-          (log/debug (str "Metrics on path '" path "' are obsolete"))
-          [path rollup-def])
-        nil))))
+  (try
+    (let [rollup (first rollup-def)
+          period (last rollup-def)]
+      (when-not @inspecting?
+        (clog/info (str "Checking metrics: "
+                        "path: " path ", "
+                        "rollup: " rollup ", "
+                        "period: " period)))
+      (let [data (mstore/fetch mstore tenant rollup period path from nil 1)]
+        (if (and (not= data :mstore-error) (not (seq data)))
+          (do
+            (log/debug (str "Metrics on path '" path "' are obsolete"))
+            [path rollup-def])
+          nil)))
+    (catch Exception e
+      (clog/error (str "Metric obsolescence checking error: " e ", "
+                       "path: " path ", "
+                       "rollup: " rollup-def) e))))
 
 (defn- filter-obsolete-metrics
   "Filter obsolete metrics."
