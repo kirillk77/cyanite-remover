@@ -103,8 +103,8 @@
 
 (defn- get-thread-pool
   "Create a threadpool."
-  [options & [tpool]]
-  (if tpool tpool (cp/threadpool (:jobs options default-jobs))))
+  [options]
+  (cp/threadpool (:jobs options default-jobs)))
 
 (defn- get-paths-from-paths-rollups
   "Get paths from a paths-rollups list."
@@ -191,9 +191,8 @@
 
 (defn- process-metrics
   "Process metrics."
-  [tenant rollups paths cass-hosts pstore options processor-fn & [tpool]]
-  (let [tpool (get-thread-pool options tpool)
-        mstore (mstore/cassandra-metric-store cass-hosts options)
+  [tenant rollups paths cass-hosts pstore options processor-fn tpool]
+  (let [mstore (mstore/cassandra-metric-store cass-hosts options)
         processor (processor-fn mstore pstore tpool tenant rollups paths options)
         paths-rollups (mp-get-paths-rollups processor)]
     (try
@@ -265,9 +264,10 @@
       (log/info starting-str)
       (log-cli-cmd options)
       (dry-mode-warn options)
-      (process-metrics tenant rollups paths cass-hosts
-                       (pstore/elasticsearch-path-store es-url options) options
-                       remove-metrics-processor))
+      (cp/with-shutdown! [tpool (get-thread-pool options)]
+        (process-metrics tenant rollups paths cass-hosts
+                         (pstore/elasticsearch-path-store es-url options)
+                         options remove-metrics-processor tpool)))
     (catch Exception e
       (clog/unhandled-error e))))
 
@@ -294,17 +294,17 @@
   (try
     (clog/disable-logging!)
     (set-inspecting-on!)
-    (process-metrics tenant rollups paths cass-hosts
-                     (pstore/elasticsearch-path-store es-url options) options
-                     list-metrics-processor)
+    (cp/with-shutdown! [tpool (get-thread-pool options)]
+      (process-metrics tenant rollups paths cass-hosts
+                       (pstore/elasticsearch-path-store es-url options) options
+                       list-metrics-processor tpool))
     (catch Exception e
       (clog/unhandled-error e))))
 
 (defn- process-paths
   "Process paths."
-  [tenant paths pstore options processor-fn & [tpool]]
-  (let [tpool (get-thread-pool options tpool)
-        processor (processor-fn pstore tenant options)
+  [tenant paths pstore options processor-fn tpool]
+  (let [processor (processor-fn pstore tenant options)
         title (pp-get-title processor)]
     (try
       (prog/set-progress-bar!
@@ -346,9 +346,10 @@
       (log/info starting-str)
       (log-cli-cmd options)
       (dry-mode-warn options)
-      (process-paths tenant paths
-                     (pstore/elasticsearch-path-store es-url options)
-                     options remove-paths-processor))
+      (cp/with-shutdown! [tpool (get-thread-pool options)]
+        (process-paths tenant paths
+                       (pstore/elasticsearch-path-store es-url options)
+                       options remove-paths-processor tpool)))
     (catch Exception e
       (clog/unhandled-error e))))
 
@@ -370,8 +371,9 @@
   (try
     (clog/disable-logging!)
     (set-inspecting-on!)
-    (process-paths tenant paths (pstore/elasticsearch-path-store es-url options)
-                   options list-paths-processor)
+    (cp/with-shutdown! [tpool (get-thread-pool options)]
+      (process-paths tenant paths (pstore/elasticsearch-path-store es-url options)
+                     options list-paths-processor tpool))
     (catch Exception e
       (clog/unhandled-error e))))
 
@@ -485,21 +487,21 @@
       (log/info starting-str)
       (log-cli-cmd options)
       (dry-mode-warn options)
-      (let [tpool (get-thread-pool options)
-            pstore (pstore/elasticsearch-path-store es-url options)
-            sort (get-sort-or-dummy-fn (:sort options))
-            processed-data (process-metrics tenant rollups paths cass-hosts
-                                            pstore options
-                                            remove-obsolete-metrics-processor
-                                            tpool)
-            obsolete-paths (->> processed-data
-                                (get-paths-from-paths-rollups (first rollups))
-                                (filter #(contains? @paths-info %))
-                                (sort)
-                                (doall))]
-        (swap! paths-info (fn [_] nil))
-        (process-paths tenant obsolete-paths pstore options
-                       remove-obsolete-paths-processor tpool)))
+      (cp/with-shutdown! [tpool (get-thread-pool options)]
+        (let [pstore (pstore/elasticsearch-path-store es-url options)
+              sort (get-sort-or-dummy-fn (:sort options))
+              processed-data (process-metrics tenant rollups paths cass-hosts
+                                              pstore options
+                                              remove-obsolete-metrics-processor
+                                              tpool)
+              obsolete-paths (->> processed-data
+                                  (get-paths-from-paths-rollups (first rollups))
+                                  (filter #(contains? @paths-info %))
+                                  (sort)
+                                  (doall))]
+          (swap! paths-info (fn [_] nil))
+          (process-paths tenant obsolete-paths pstore options
+                         remove-obsolete-paths-processor tpool))))
     (catch Exception e
       (clog/unhandled-error e))))
 
@@ -509,11 +511,12 @@
   (try
     (clog/disable-logging!)
     (set-inspecting-on!)
-    (let [tpool (get-thread-pool options)
-          mstore (mstore/cassandra-metric-store cass-hosts options)
-          pstore (pstore/elasticsearch-path-store es-url options)
-          sort (get-sort-or-dummy-fn (:sort options))
-          obsolete-data (->> (get-paths pstore tenant paths
+    (cp/with-shutdown! [tpool (get-thread-pool options)]
+      (let [tpool (get-thread-pool options)
+            mstore (mstore/cassandra-metric-store cass-hosts options)
+            pstore (pstore/elasticsearch-path-store es-url options)
+            sort (get-sort-or-dummy-fn (:sort options))
+            obsolete-data (->> (get-paths pstore tenant paths
                                         (:exclude-paths options)
                                         (:sort options))
                              (filter-obsolete-metrics mstore tpool tenant
@@ -521,7 +524,7 @@
                              (get-paths-from-paths-rollups (first rollups))
                              (sort))]
       (newline)
-      (dorun (map println obsolete-data)))
+      (dorun (map println obsolete-data))))
     (catch Exception e
       (clog/unhandled-error e))))
 
@@ -671,14 +674,14 @@
       (log/info starting-str)
       (log-cli-cmd options)
       (dry-mode-warn options)
-      (let [tpool (get-thread-pool options)
-            pstore (pstore/elasticsearch-path-store es-url options)
-            sort (get-sort-or-dummy-fn (:sort options))
-            empty-paths (->> (tree-walker tenant paths pstore options
-                                          empty-paths-finder tpool)
-                             (sort))]
-        (process-paths tenant empty-paths pstore options
-                       remove-empty-paths-processor tpool)))
+      (cp/with-shutdown! [tpool (get-thread-pool options)]
+        (let [pstore (pstore/elasticsearch-path-store es-url options)
+              sort (get-sort-or-dummy-fn (:sort options))
+              empty-paths (->> (tree-walker tenant paths pstore options
+                                            empty-paths-finder tpool)
+                               (sort))]
+          (process-paths tenant empty-paths pstore options
+                         remove-empty-paths-processor tpool))))
     (catch Exception e
       (clog/unhandled-error e))))
 
