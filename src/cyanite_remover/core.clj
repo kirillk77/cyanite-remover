@@ -645,8 +645,9 @@
                   (dorun (map walk (t-get tree-impl path))))
                 (when (seq path)
                   (tp-process-path processor path))
-                (clog/error (str "Error in tree walker: " e ", "
-                                 "path: " path) e)))]
+                (catch Exception e
+                  (clog/error (str "Error in tree walker: " e ", "
+                                   "path: " path) e))))]
       (try
         (prog/set-progress-bar!
          "[:bar] :percent :done/:total Elapsed :elapseds ETA :etas")
