@@ -87,13 +87,13 @@
 (defn- search
   "Search for a path."
   [search-fn scroll-fn tenant leafs-only limit-depth path batch-size batch-rate]
-  (let [throttle-fn (utils/fn-or-trtlfn #(do %) batch-rate)
+  (let [throttle-fn (utils/fn-or-trtlfn do batch-rate)
         query (build-query (build-filter tenant leafs-only limit-depth path))
         _ (log/trace (str "ES search query: " query))
         resp (search-fn :query query :size batch-size
                         :search_type "query_then_fetch" :scroll "1m")]
     (log/trace (str "ES search response: " resp))
-    (map #(:_source %) (map throttle-fn (scroll-fn resp)))))
+    (map :_source (map throttle-fn (scroll-fn resp)))))
 
 (defn- log-shards-errors
   "Log shards' errors."
@@ -119,8 +119,8 @@
          (not total) (error-fn "total")
          (not successful) (error-fn "successful")
          (not failed) (error-fn "failed")
-         (> failed 0) (do (log-shards-errors failed (:failures shards) path
-                                             stats-errors) false))
+         (pos? failed) (do (log-shards-errors failed (:failures shards) path
+                                              stats-errors) false))
         true)
       (error-fn "shards"))))
 
