@@ -27,22 +27,23 @@
 (defn- usage
   "Construct usage message."
   [options-summary]
-  (->> ["A Cyanite data removal tool"
-        ""
-        "Usage: "
-        "  cyanite-remover [options] remove-metrics <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
-        "  cyanite-remover [options] remove-paths <tenant> <path,...> <elasticsearch_url>"
-        "  cyanite-remover [options] remove-obsolete-data <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
-        "  cyanite-remover [options] remove-empty-paths <tenant> <path,...> <elasticsearch_url>"
-        "  cyanite-remover [options] list-metrics <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
-        "  cyanite-remover [options] list-paths <tenant> <path,...> <elasticsearch_url>"
-        "  cyanite-remover [options] list-obsolete-data <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
-        "  cyanite-remover [options] list-empty-paths <tenant> <path,...> <elasticsearch_url>"
-        "  cyanite-remover help"
-        ""
-        "Options:"
-        options-summary]
-       (str/join \newline)))
+  (str/join
+   \newline
+   ["A Cyanite data removal tool"
+    ""
+    "Usage: "
+    "  cyanite-remover [options] remove-metrics <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
+    "  cyanite-remover [options] remove-paths <tenant> <path,...> <elasticsearch_url>"
+    "  cyanite-remover [options] remove-obsolete-data <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
+    "  cyanite-remover [options] remove-empty-paths <tenant> <path,...> <elasticsearch_url>"
+    "  cyanite-remover [options] list-metrics <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
+    "  cyanite-remover [options] list-paths <tenant> <path,...> <elasticsearch_url>"
+    "  cyanite-remover [options] list-obsolete-data <tenant> <rollup,...> <path,...> <cassandra_host,...> <elasticsearch_url>"
+    "  cyanite-remover [options] list-empty-paths <tenant> <path,...> <elasticsearch_url>"
+    "  cyanite-remover help"
+    ""
+    "Options:"
+    options-summary]))
 
 (defn- error-msg
   "Combine error messages."
@@ -53,7 +54,7 @@
 (defn- exit
   "Print message and exit with status."
   [status msg]
-  (if (= status 0)
+  (if (zero? 0)
     (println msg)
     (binding [*out* *err*]
       (println msg)))
@@ -73,7 +74,7 @@
   [command valid-options options]
   (doseq [option (keys options)]
     (when (and (not (contains? valid-options option))
-               (not (= option :raw-arguments)))
+               (not= option :raw-arguments))
       (exit 1 (error-msg
                [(format "Option \"--%s\" conflicts with the command \"%s\""
                         (name option) command)])))))
@@ -226,11 +227,11 @@
     :validate [#(<= 0 %) "Must be a number >= 0"]]
    ["-t" "--to TO" "To time (Unix epoch)"
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %) "Must be a number > 0"]]
+    :validate [pos? "Must be a number > 0"]]
    ["-T" "--threshold THRESHOLD" (str "Threshold in seconds. Default: "
                                       core/default-obsolete-metrics-threshold)
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %) "Must be a number > 0"]]
+    :validate [pos? "Must be a number > 0"]]
    ["-r" "--run" "Force normal run (dry run using on default)"]
    ["-e" "--exclude-paths PATHS"
     "Exclude path. Example: \"requests.apache.*;sum.cpu.?\""
@@ -238,45 +239,45 @@
    ["-s" "--sort" "Sort paths in alphabetical order"]
    ["-j" "--jobs JOBS" "Number of jobs to run simultaneously"
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %) "Must be a number > 0"]]
+    :validate [pos? "Must be a number > 0"]]
    [nil "--cassandra-keyspace KEYSPACE"
     (str "Cassandra keyspace. Default: " mstore/default-cassandra-keyspace)]
    ["-O" "--cassandra-options OPTIONS"
     "Cassandra options. Example: \"{:compression :lz4}\""
-    :parse-fn #(read-string %)
+    :parse-fn read-string
     :validate [#(= clojure.lang.PersistentArrayMap (type %))]]
    [nil "--cassandra-channel-size SIZE"
     (str "Cassandra channel size. Default: "
          mstore/default-cassandra-channel-size)
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %) "Must be a number > 0"]]
+    :validate [pos? "Must be a number > 0"]]
    [nil "--cassandra-batch-size SIZE"
     (str "Cassandra batch size. Default: " mstore/default-cassandra-batch-size)
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %) "Must be a number > 0"]]
+    :validate [pos? "Must be a number > 0"]]
    [nil "--cassandra-batch-rate RATE" "Cassandra batch rate (batches per second)"
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %) "Must be a number > 0"]]
+    :validate [pos? "Must be a number > 0"]]
    [nil "--elasticsearch-index INDEX"
     (str "Elasticsearch index. Default: " pstore/default-es-index)]
    [nil "--elasticsearch-scroll-batch-size SIZE"
     (str "Elasticsearch scroll batch size. Default: "
          pstore/default-es-scroll-batch-size)
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %) "Must be a number > 0"]]
+    :validate [pos? "Must be a number > 0"]]
    [nil "--elasticsearch-scroll-batch-rate RATE"
     "Elasticsearch scroll batch rate (batches per second)"
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %) "Must be a number > 0"]]
+    :validate [pos? "Must be a number > 0"]]
    [nil "--elasticsearch-delete-request-rate RATE"
     "Elasticsearch delete request rate (requests per second)"
     :parse-fn #(Integer/parseInt %)
-    :validate [#(< 0 %) "Must be a number > 0"]]
+    :validate [pos? "Must be a number > 0"]]
    ["-l" "--log-file FILE" (str "Log file. Default: " clog/default-log-file)]
    ["-L" "--log-level LEVEL"
     (str "Log level (all, trace, debug, info, warn, error, fatal, off). "
          "Default: " clog/default-log-level)
-    :validate [#(or (= (count %) 0)
+    :validate [#(or (zero? (count %))
                     (not= (get logconfig/levels % :not-found) :not-found))
                "Invalid log level"]]
    ["-S" "--stop-on-error" "Stop on first non-fatal error"]
@@ -287,7 +288,7 @@
   "Run command."
   [arguments options summary]
   (let [command (first arguments)]
-    (when (not (contains? cli-commands command))
+    (when-not (contains? cli-commands command)
       (exit 1 (error-msg [(format "Unknown command: \"%s\"" command)])))
     (apply (resolve (symbol (str "cyanite-remover.cli/run-" command)))
            [command (drop 1 arguments) options summary])))
