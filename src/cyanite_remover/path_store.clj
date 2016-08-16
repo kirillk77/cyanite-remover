@@ -87,7 +87,7 @@
 (defn- search
   "Search for a path."
   [search-fn scroll-fn tenant leafs-only limit-depth path batch-size batch-rate]
-  (let [throttle-fn (utils/fn-or-trtlfn do batch-rate)
+  (let [throttle-fn (utils/fn-or-trtlfn #(do %) batch-rate)
         query (build-query (build-filter tenant leafs-only limit-depth path))
         _ (log/trace (str "ES search query: " query))
         resp (search-fn :query query :size batch-size
