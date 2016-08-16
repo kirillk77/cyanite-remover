@@ -2,6 +2,7 @@
   (:require [cyanite-remover.logging :as clog]
             [cyanite-remover.utils :as utils]
             [qbits.alia :as alia]
+            [qbits.alia.async :as alia_a]
             [qbits.alia.policy.load-balancing :as alia_lbp]
             [clojure.core.async :as async]
             [throttler.core :as trtl]
@@ -126,8 +127,8 @@
                             query (build-batch statement values)]
                         (when run
                           (async/take!
-                           (alia/execute-chan session query
-                                              {:consistency :any})
+                           (alia_a/execute-chan session query
+                                                {:consistency :any})
                            (fn [rows-or-e]
                              (if (instance? Throwable rows-or-e)
                                (log-error rows-or-e rollup period path
