@@ -19,6 +19,9 @@
                  [clj-time "0.12.0"]
                  [org.clojure/math.combinatorics "0.1.3"]
                  [intervox/clj-progress "0.2.1"]]
+  :plugins [[lein-kibit "0.1.2"]
+            [lein-ancient "0.6.8"]
+            [lein-bikeshed "0.2.0"]]
   :main ^:skip-aot cyanite-remover.cli
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
