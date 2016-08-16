@@ -135,7 +135,7 @@
                                           stats-errors))))))
                       (catch Exception e
                         (log-error e rollup period path stats-errors))))
-                  (when (not @data-processed?)
+                  (when-not @data-processed?
                     (swap! data-processed? (fn [_] true))))))
     ch-in))
 
@@ -154,8 +154,7 @@
                          default-cassandra-options
                          (:cassandra-options options {}))
         _ (log/info "Cassandra options: " c-options)
-        session (-> (alia/cluster c-options)
-                    (alia/connect keyspace))
+        session (alia/connect (alia/cluster c-options) keyspace)
         fetch-pcqls (prepare-cqls fetch-cqls session)
         chan-size (:cassandra-channel-size options default-cassandra-channel-size)
         batch-size (:cassandra-batch-size options default-cassandra-batch-size)
@@ -217,11 +216,11 @@
          :errors @stats-errors})
       (shutdown [this]
         (log/info "Shutting down the metric store...")
-        (swap! batch #(if (> (count %) 0)
+        (swap! batch #(if (pos? (count %))
                         (do (async/>!! channel {:values %}) [])
                         %))
         (async/close! channel)
-        (while (and (> @stats-processed 0) (not @delete-processed?))
+        (while (and (pos? @stats-processed) (not @delete-processed?))
           (Thread/sleep 100))
         (.close session)
         (log/info "The metric store has been down")))))
