@@ -225,10 +225,9 @@
 (defn- get-times
   "Get a list of times."
   [mstore options tenant rollup period path from to]
-  (if (or from to)
+  (when (or from to)
     (let [result (mstore/fetch mstore tenant rollup period path from to nil)]
-      (if (= result :mstore-error) [] (map #(:time %) result)))
-    nil))
+      (if (= result :mstore-error) [] (map :time result)))))
 
 (defn- remove-metrics-processor
   "Metrics removal processor."
@@ -399,11 +398,9 @@
                         "rollup: " rollup ", "
                         "period: " period)))
       (let [data (mstore/fetch mstore tenant rollup period path from nil 1)]
-        (if (and (not= data :mstore-error) (not (seq data)))
-          (do
-            (log/debug (str "Metrics on path '" path "' are obsolete"))
-            [path rollup-def])
-          nil)))
+        (when (and (not= data :mstore-error) (not (seq data)))
+          (log/debug (str "Metrics on path '" path "' are obsolete"))
+          [path rollup-def])))
     (catch Exception e
       (clog/error (str "Metric obsolescence checking error: " e ", "
                        "path: " path ", "
@@ -694,9 +691,8 @@
       (cp/with-shutdown! [tpool (get-thread-pool options)]
         (let [pstore (pstore/elasticsearch-path-store es-url options)
               sort (get-sort-or-dummy-fn (:sort options))
-              empty-paths (->> (tree-walker tenant paths pstore options
-                                            empty-paths-finder tpool)
-                               (sort))]
+              empty-paths (sort (tree-walker tenant paths pstore options
+                                             empty-paths-finder tpool))]
           (process-paths tenant empty-paths pstore options
                          remove-empty-paths-processor tpool))))
     (catch Exception e
@@ -711,9 +707,8 @@
     (cp/with-shutdown! [tpool (get-thread-pool options)]
       (let [pstore (pstore/elasticsearch-path-store es-url options)
             sort (get-sort-or-dummy-fn (:sort options))
-            empty-paths (->> (tree-walker tenant paths pstore options
-                                          empty-paths-finder tpool)
-                             (sort))]
+            empty-paths (sort (tree-walker tenant paths pstore options
+                                           empty-paths-finder tpool))]
         (newline)
         (dorun (map println empty-paths))))
     (catch Exception e
