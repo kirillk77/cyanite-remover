@@ -7,7 +7,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/tools.cli "0.3.5"]
                  [org.clojure/tools.logging "0.3.1"]
-                 [spootnik/unilog "0.7.13"]
+                 [spootnik/unilog "0.7.14"]
                  [cc.qbits/alia "3.1.10"]
                  [cc.qbits/alia-async "3.1.3"]
                  [net.jpountz.lz4/lz4 "1.3.0"]
