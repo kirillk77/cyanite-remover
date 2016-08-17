@@ -1,5 +1,21 @@
 # cyanite-remover changes
 
+## Unreleased
+
+* clojure 1.8.0
+* tools.cli 0.3.5
+* alia 3.1.10
+* alia-async 3.1.3
+* snappy-java 1.1.2.6
+* core.async 0.2.385
+* elastisch 2.2.2
+* claypoole 1.1.3
+* clj-time 0.12.0
+* math.combinatorics 0.1.3
+* Make code more Clojure-idiomatic
+
+[Diff](https://github.com/cybem/cyanite-remover/compare/0.6.2...HEAD)
+
 ## [0.6.2 - 2015-12-03](https://github.com/cybem/cyanite-remover/releases/tag/0.6.2)
 
 This is a maintenance and bugfix release.
