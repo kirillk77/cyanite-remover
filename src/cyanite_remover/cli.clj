@@ -4,8 +4,7 @@
             [cyanite-remover.logging :as clog]
             [cyanite-remover.metric-store :as mstore]
             [cyanite-remover.path-store :as pstore]
-            [cyanite-remover.core :as core]
-            [org.spootnik.logconfig :as logconfig])
+            [cyanite-remover.core :as core])
   (:gen-class))
 
 (def cli-commands #{"remove-metrics" "remove-paths" "remove-obsolete-data"
@@ -275,11 +274,11 @@
     :validate [pos? "Must be a number > 0"]]
    ["-l" "--log-file FILE" (str "Log file. Default: " clog/default-log-file)]
    ["-L" "--log-level LEVEL"
-    (str "Log level (all, trace, debug, info, warn, error, fatal, off). "
-         "Default: " clog/default-log-level)
-    :validate [#(or (zero? (count %))
-                    (not= (get logconfig/levels % :not-found) :not-found))
-               "Invalid log level"]]
+    (str "Log level "
+         "(" (str/join ", " (map clog/level-to-str clog/log-levels)) "). "
+         "Default: " (clog/level-to-str clog/default-log-level))
+    :parse-fn clog/str-to-level
+    :validate [(partial contains? (set clog/log-levels)) "Invalid log level"]]
    ["-S" "--stop-on-error" "Stop on first non-fatal error"]
    ["-P" "--disable-progress" "Disable progress bar"]
    ["-h" "--help" "Show this help"]])

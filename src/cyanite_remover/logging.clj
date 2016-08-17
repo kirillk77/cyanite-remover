@@ -2,21 +2,25 @@
   (:require [clojure.string :as str]
             [clojure.stacktrace :as stacktrace]
             [clojure.tools.logging :as log]
-            [org.spootnik.logconfig :as logconfig]))
+            [unilog.config :as logconf]))
 
 (defmacro log-disable-logging!
   "Disable logging macro."
   []
-  `(logconfig/start-logging! {:level "off" :console false :files ""}))
+  `(logconf/start-logging! {:level :off :console false :files []}))
 
 (log-disable-logging!)
 
 (def ^:const default-log-file "cyanite-remover.log")
-(def ^:const default-log-level "info")
+(def ^:const default-log-level :info)
 
 (def print-log? (atom false))
 (def disable-log? (atom false))
 (def stop-on-error? (atom false))
+
+(def ^:const log-levels (keys logconf/levels))
+(def level-to-str name)
+(def str-to-level keyword)
 
 (defn set-logging!
   "Set options."
@@ -25,9 +29,9 @@
   (swap! disable-log? (fn [_] (:disable-log options @disable-log?)))
   (swap! stop-on-error? (fn [_] (:stop-on-error options @stop-on-error?)))
   (if-not @disable-log?
-    (logconfig/start-logging! {:level (:log-level options default-log-level)
-                               :console false
-                               :files [(:log-file options default-log-file)]})
+    (logconf/start-logging! {:level (:log-level options default-log-level)
+                             :console false
+                             :files [(:log-file options default-log-file)]})
     (log-disable-logging!)))
 
 (defn disable-logging!

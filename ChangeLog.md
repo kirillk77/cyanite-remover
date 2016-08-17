@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Replace `org.spootnik/logconfig` with `spootnik/unilog`
+* Make code more Clojure-idiomatic
 * clojure 1.8.0
 * tools.cli 0.3.5
 * alia 3.1.10
@@ -12,7 +14,6 @@
 * claypoole 1.1.3
 * clj-time 0.12.0
 * math.combinatorics 0.1.3
-* Make code more Clojure-idiomatic
 
 [Diff](https://github.com/cybem/cyanite-remover/compare/0.6.2...HEAD)
 
