@@ -1,6 +1,6 @@
 # cyanite-remover changes
 
-## 0.6.2
+## [0.6.2 - 2015-12-03](https://github.com/cybem/cyanite-remover/releases/tag/0.6.2)
 
 This is a maintenance and bugfix release.
 
@@ -11,14 +11,14 @@ This is a maintenance and bugfix release.
 * core.async 0.2.374
 * Update the documentation
 
-## 0.6.1
+## [0.6.1 - 2015-10-28](https://github.com/cybem/cyanite-remover/releases/tag/0.6.1)
 
 This is a bugfix release.
 
 * Remove the `exclude-paths` options from commands `remove-empty-paths` and
 `list-empty-paths` as useless and harmful
 
-## 0.6.0
+## [0.6.0 - 2015-10-27](https://github.com/cybem/cyanite-remover/releases/tag/0.6.0)
 
 This is a feature and maintenance release.
 
@@ -34,7 +34,7 @@ This is a feature and maintenance release.
 * Use set instead of hash-map for collecting paths information
 * Use a common thread pool in the `remove-obsolete-data` command
 
-## 0.5.1
+## [0.5.1 - 2015-10-20](https://github.com/cybem/cyanite-remover/releases/tag/0.5.1)
 
 This is a minor feature and bugfix release.
 
@@ -42,7 +42,7 @@ This is a minor feature and bugfix release.
 * Enable the `--jobs` option for the `list-obsolete-data` command
 * Don't delete non-leaf paths during the removal of obsolete data
 
-## 0.5.0
+## [0.5.0 - 2015-10-13](https://github.com/cybem/cyanite-remover/releases/tag/0.5.0)
 
 This is a feature and maintenance release.
 
@@ -58,7 +58,7 @@ This is a feature and maintenance release.
 * clj-time 0.11.0
 * snappy-java 1.1.2
 
-## 0.4.0
+## [0.4.0 - 2015-06-14](https://github.com/cybem/cyanite-remover/releases/tag/0.4.0)
 
 This is a minor feature, maintenance and bugfix release.
 
@@ -76,13 +76,13 @@ This is a minor feature, maintenance and bugfix release.
 * Add the Jarkeeper badge
 * Support question mark in wildcards
 
-## 0.3.1
+## [0.3.1 - 2015-06-04](https://github.com/cybem/cyanite-remover/releases/tag/0.3.1)
 
 This is a maintenance release.
 
 * Delete metrics from branches as well
 
-## 0.3.0
+## [0.3.0 - 2015-05-31](https://github.com/cybem/cyanite-remover/releases/tag/0.3.0)
 
 This is a minor feature and bugfix release.
 
@@ -91,7 +91,7 @@ This is a minor feature and bugfix release.
 * Fix path removing
 * Add progress bar for path operations
 
-## 0.2.0
+## [0.2.0 - 2015-05-14](https://github.com/cybem/cyanite-remover/releases/tag/0.2.0)
 
 This is a minor feature and bugfix release.
 
@@ -99,6 +99,6 @@ This is a minor feature and bugfix release.
 * Fix errors in logging
 * Fix errors in stats
 
-## 0.1.0
+## [0.1.0 - 2015-04-29](https://github.com/cybem/cyanite-remover/releases/tag/0.1.2)
 
-This is a first public release.
+This is the first public release.
